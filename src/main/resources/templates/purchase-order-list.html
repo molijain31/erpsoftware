@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+
+<div layout:fragment="content">
+    <div class="col-lg-12 grid-margin stretch-card">
+        <div class="card" style="border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+            <div class="card-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 16px 24px;">
+                <h4 class="mb-0 text-white font-weight-bold" style="letter-spacing: 0.3px;">
+                    <i class="typcn typcn-th-list mr-2" style="font-size: 1.3rem; vertical-align: middle;"></i>
+                    Purchase Order List
+                </h4>
+                <div class="d-inline-flex align-items-center" style="gap: 10px;">
+                    <button type="button" class="btn btn-sm text-white font-weight-bold" style="background: #3b82f6; border: none; padding: 6px 16px; border-radius: 6px; box-shadow: 0 2px 4px rgba(59,130,246,0.25);"
+                            data-toggle="modal" data-target="#pendingBookingModal" id="viewPendingBookingBtn">
+                        <i class="typcn typcn-clipboard"></i> View Pending Booking Request
+                    </button>
+                    <a th:href="@{/purchaseorders/new}" class="btn btn-sm text-white font-weight-bold" style="background: #10b981; border: none; padding: 6px 16px; border-radius: 6px; box-shadow: 0 2px 4px rgba(16,185,129,0.25);">
+                        <i class="typcn typcn-plus"></i> Create Purchase Order
+                    </a>
+                </div>
+            </div>
+
+            <div class="card-body p-4">
+                <!-- Success & Error Alerts -->
+                <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                    <span th:text="${successMessage}"></span>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <span th:text="${errorMessage}"></span>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="table-responsive">
+                    <table id="dataTable" class="table table-hover table-bordered mb-0" style="font-size: 13.5px; border: 1px solid #e2e8f0;">
+                        <thead style="background: #f8fafc; color: #475569; border-bottom: 2px solid #cbd5e1;">
+                        <tr>
+                            <th style="width: 100px; white-space: nowrap; font-weight: 700; color: #334155;">PO Number</th>
+                            <th style="white-space: nowrap; font-weight: 700; color: #334155;">Vendor Name</th>
+                            <th class="text-right" style="width: 95px; white-space: nowrap; font-weight: 700; color: #334155;">Total Cost</th>
+                            <th class="text-center" style="width: 75px; white-space: nowrap; font-weight: 700; color: #334155;">Total Qty</th>
+                            <th class="text-center" style="width: 100px; white-space: nowrap; font-weight: 700; color: #334155;">Entry Date</th>
+                            <th class="text-center" style="width: 100px; white-space: nowrap; font-weight: 700; color: #334155;">Mod.Date</th>
+                            <th class="text-center" style="width: 120px; white-space: nowrap; font-weight: 700; color: #334155;">Items</th>
+                            <th class="text-center" style="width: 120px; white-space: nowrap; font-weight: 700; color: #334155;">Status</th>
+                            <th class="text-center no-sort" style="width: 140px; font-weight: 700; color: #334155; white-space: nowrap;">Action</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+
+                        <tr th:each="po, poStat : ${purchaseOrders}" th:if="${not #lists.isEmpty(purchaseOrders)}">
+                            <!-- PO Number -->
+                            <td style="font-weight: 700; color: #0f172a; white-space: nowrap;" th:text="${po.purchaseOrderNo}"></td>
+
+                            <!-- Vendor Name + PayPal -->
+                            <td style="white-space: nowrap;">
+                                <span th:text="${po.vendorName != null ? po.vendorName : ('Vendor #' + po.vendorId)}" style="font-weight: 700; color: #0f172a; white-space: nowrap;"></span>
+                                <div th:if="${po.transactionAccount != null and !po.transactionAccount.isEmpty()}" style="margin-top: 2px;">
+                                    <span class="badge" style="background: #e2e8f0; color: #1e293b; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; white-space: nowrap;" th:text="'PayPal: ' + ${po.transactionAccount}"></span>
+                                </div>
+                            </td>
+
+                            <!-- Total Cost -->
+                            <td class="font-weight-bold" style="color: #0f172a; white-space: nowrap;" th:text="${po.totalCost != null} ? '₹' + ${#numbers.formatDecimal(po.totalCost, 1, 2)} : '₹0.00'"></td>
+
+                            <!-- Total Quantity -->
+                            <td class="text-center" style="color: #334155; white-space: nowrap;" th:text="${po.totalQuantity != null} ? ${po.totalQuantity} : 0"></td>
+
+                            <!-- Entry Date -->
+                            <td class="text-center" style="color: #475569; white-space: nowrap;" th:text="${po.entryDate != null} ? ${#dates.format(po.entryDate, 'dd-MMM-yyyy')} : ''"></td>
+
+                            <!-- Mod.Date -->
+                            <td class="text-center" style="color: #475569; white-space: nowrap;" th:text="${po.modifiedDate != null} ? ${#dates.format(po.modifiedDate, 'dd-MMM-yyyy')} : '-'"></td>
+
+                            <!-- Items -->
+                            <td class="text-center">
+                                <a href="javascript:void(0)"
+                                   class="badge"
+                                   style="background: #e2e8f0; color: #1e293b; font-weight: 700; padding: 5px 10px; border-radius: 6px; text-decoration: none; cursor: pointer;"
+                                   data-toggle="popover"
+                                   data-trigger="hover focus"
+                                   data-html="true"
+                                   title="Items in Purchase Order"
+                                   th:data-content="${poItemNamesMap.get(po.orderId) != null ? #strings.listJoin(poItemNamesMap.get(po.orderId), '&lt;br/&gt;') : ''}"
+                                   th:text="${(poItemNamesMap.get(po.orderId) != null ? poItemNamesMap.get(po.orderId).size() : 0) + ' Items'}">
+                                </a>
+                            </td>
+
+                            <!-- Status Badge -->
+                            <td style="text-align: center; white-space: nowrap;">
+                                <!-- Status 1: create (Red) -->
+                                <span th:if="${po.status == 1 or po.status == null}" class="badge" style="background-color: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; font-weight: 600; padding: 5px 12px; border-radius: 6px;">create</span>
+                                <!-- Status 2: Partially Received (Orange) -->
+                                <span th:if="${po.status == 2}" class="badge" style="background-color: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-weight: 600; padding: 5px 12px; border-radius: 6px;">Partially Received</span>
+                                <!-- Status 3: Fully Received (Green) -->
+                                <span th:if="${po.status == 3}" class="badge" style="background-color: #dcfce7; color: #15803d; border: 1px solid #86efac; font-weight: 600; padding: 5px 12px; border-radius: 6px;">Fully Received</span>
+                                <!-- Status 4: Closed (Blue) -->
+                                <span th:if="${po.status == 4}" class="badge" style="background-color: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-weight: 600; padding: 5px 12px; border-radius: 6px;">Closed</span>
+                            </td>
+
+                            <!-- Actions -->
+                            <td class="text-center" style="white-space: nowrap; vertical-align: middle;">
+                                <div class="d-inline-flex justify-content-center align-items-center" style="gap: 6px;">
+                                    <button type="button" class="btn btn-sm text-white font-weight-bold" style="background: #3b82f6; border: none; padding: 5px 14px; border-radius: 6px; box-shadow: 0 2px 4px rgba(59,130,246,0.25);"
+                                            data-toggle="modal"
+                                            th:data-target="'#detailsModal-' + ${po.orderId}">
+                                        <i class="typcn typcn-eye"></i> View
+                                    </button>
+                                    <a th:href="@{/purchaseorders/edit/{id}(id=${po.orderId})}"
+                                       class="btn btn-sm text-white font-weight-bold" style="background: #10b981; border: none; padding: 5px 14px; border-radius: 6px; box-shadow: 0 2px 4px rgba(16,185,129,0.25);"
+                                       th:if="${po.status != 3}"
+                                       title="Receive Purchase Order">
+                                        <i class="typcn typcn-tick"></i> Received
+                                    </a>
+                                </div>
+
+                                <!-- Modal for PO Details -->
+                                <div class="modal fade" th:id="'detailsModal-' + ${po.orderId}" tabindex="-1" role="dialog" aria-labelledby="detailsModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog modal-lg" role="document">
+                                        <div class="modal-content" style="border-radius: 10px; overflow: hidden; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
+                                            <div class="modal-header text-white" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 16px 24px;">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="typcn typcn-document-text mr-2" style="font-size: 1.4rem;"></i>
+                                                    <h5 class="modal-title font-weight-bold text-white mb-0" style="letter-spacing: 0.3px;" th:text="'Purchase Order Details - ' + ${po.purchaseOrderNo}"></h5>
+                                                </div>
+                                                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" style="opacity: 0.9;">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button>
+                                            </div>
+                                            <div class="modal-body text-left p-4">
+                                                 <div class="row mb-3">
+                                                     <div class="col-md-3 col-6 mb-2">
+                                                         <strong style="color: #475569; font-size: 13px;">PO:</strong>
+                                                         <div style="font-weight: 700; color: #4f46e5; font-size: 14px;" th:text="${po.purchaseOrderNo}"></div>
+                                                     </div>
+                                                     <div class="col-md-3 col-6 mb-2">
+                                                         <strong style="color: #475569; font-size: 13px;">Vendor Name:</strong>
+                                                         <div style="font-weight: 700; color: #0f172a; font-size: 14px;" th:text="${po.vendorName}"></div>
+                                                     </div>
+                                                     <div class="col-md-3 col-6 mb-2">
+                                                         <strong style="color: #475569; font-size: 13px;">Entry Date:</strong>
+                                                         <div style="color: #334155; font-size: 14px;" th:text="${po.entryDate != null} ? ${#dates.format(po.entryDate, 'dd-MMM-yyyy')} : ''"></div>
+                                                     </div>
+                                                     <div class="col-md-3 col-6 mb-2">
+                                                         <strong style="color: #475569; font-size: 13px;">Status:</strong>
+                                                         <div>
+                                                             <span th:if="${po.status == 1 or po.status == null}" class="badge" style="background-color: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; font-weight: 600; padding: 5px 12px; border-radius: 6px;">Created</span>
+                                                             <span th:if="${po.status == 2}" class="badge" style="background-color: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-weight: 600; padding: 5px 12px; border-radius: 6px;">Partially Received</span>
+                                                             <span th:if="${po.status == 3}" class="badge" style="background-color: #dcfce7; color: #15803d; border: 1px solid #86efac; font-weight: 600; padding: 5px 12px; border-radius: 6px;">Fully Received</span>
+                                                             <span th:if="${po.status == 4}" class="badge" style="background-color: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-weight: 600; padding: 5px 12px; border-radius: 6px;">Closed</span>
+                                                         </div>
+                                                     </div>
+                                                 </div>
+                                                <div class="table-responsive">
+                                                    <table class="table table-hover table-bordered mb-0" style="font-size: 13.5px; border: 1px solid #e2e8f0;">
+                                                        <thead style="background: #f8fafc; color: #475569; border-bottom: 2px solid #cbd5e1;">
+                                                            <tr>
+                                                                <th style="font-weight: 700; color: #334155;">Sl No.</th>
+                                                                <th style="font-weight: 700; color: #334155;">Item Code</th>
+                                                                <th style="font-weight: 700; color: #334155;">Item Name</th>
+                                                                <th style="font-weight: 700; color: #334155;">Item Type</th>
+                                                                <th class="text-right" style="font-weight: 700; color: #334155;">Rate</th>
+                                                                <th class="text-center" style="font-weight: 700; color: #334155;">Quantity</th>
+                                                                <th class="text-center" style="font-weight: 700; color: #334155;">Received Qty</th>
+                                                                <th class="text-right" style="font-weight: 700; color: #334155;">Total Cost</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr th:each="detail : ${po.details}">
+                                                                <td class="text-center font-weight-bold" style="color: #64748b;" th:text="${detail.slNo}"></td>
+                                                                <td style="color: #334155;" th:text="${detail.item != null ? detail.item.itemCode : 'N/A'}"></td>
+                                                                <td style="font-weight: 700; color: #0f172a;" th:text="${detail.item != null ? detail.item.itemName : 'N/A'}"></td>
+                                                                <td style="color: #334155;" th:text="${detail.item != null and detail.item.type != null ? detail.item.type.typeName : 'N/A'}"></td>
+                                                                <td class="text-right" style="color: #334155;" th:text="${detail.rate != null ? '₹' + #numbers.formatDecimal(detail.rate, 1, 2) : '₹0.00'}"></td>
+                                                                <td class="text-center" style="color: #334155;" th:text="${detail.quantity != null ? detail.quantity : 0}"></td>
+                                                                <td class="text-center" style="color: #334155;" th:text="${detail.receivedQuantity != null ? detail.receivedQuantity : 0}"></td>
+                                                                <td class="text-right font-weight-bold" style="color: #0f172a;" th:text="${detail.totalCost != null ? '₹' + #numbers.formatDecimal(detail.totalCost, 1, 2) : '₹0.00'}"></td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                                <div class="text-right mt-3">
+                                                    <h5 style="color: #0f172a;"><strong>Grand Total: </strong><span style="color: #10b981; font-weight: 700;" th:text="${po.totalCost != null} ? '₹' + ${#numbers.formatDecimal(po.totalCost, 1, 2)} : '₹0.00'"></span></h5>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer d-flex justify-content-between align-items-center" style="background: #f8fafc; border-top: 1px solid #cbd5e1;">
+                                                <button type="button" class="btn text-white font-weight-bold" style="background: #10b981; border: none; padding: 7px 20px; border-radius: 6px; box-shadow: 0 2px 4px rgba(16,185,129,0.25);" th:onclick="'printModal(\'detailsModal-' + ${po.orderId} + '\')'">
+                                                    <i class="typcn typcn-printer mr-1"></i> Print
+                                                </button>
+                                                <button type="button" class="btn text-white font-weight-bold" style="background: #64748b; border: none; padding: 7px 20px; border-radius: 6px;" data-dismiss="modal">Close</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Show if no records -->
+                        <tr th:if="${#lists.isEmpty(purchaseOrders)}">
+                            <td colspan="9" class="text-center">
+                                No purchase orders found.
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Pending Booking Requests Summary -->
+    <div class="modal fade" id="pendingBookingModal" tabindex="-1" role="dialog" aria-labelledby="pendingBookingModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content" style="border-radius: 10px; overflow: hidden; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
+                <div class="modal-header text-white" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 16px 24px;">
+                    <div class="d-flex align-items-center">
+                        <i class="typcn typcn-clipboard mr-2" style="font-size: 1.4rem; vertical-align: middle;"></i>
+                        <h5 class="modal-title font-weight-bold text-white mb-0" id="pendingBookingModalLabel" style="letter-spacing: 0.3px;">Pending Booking Requests Summary</h5>
+                    </div>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" style="opacity: 0.9;">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body text-left p-4">
+                    <!-- Dropdown Filter -->
+                    <div class="form-group mb-4">
+                        <label for="itemFilterDropdown" class="font-weight-bold" style="color: #475569;">Filter by Item:</label>
+                        <select class="form-control" id="itemFilterDropdown" style="border-radius: 6px; border: 1px solid #cbd5e1;">
+                            <option value="all">All Items</option>
+                        </select>
+                    </div>
+
+                    <!-- Items Summary Table -->
+                    <div class="table-responsive">
+                        <table class="table table-hover table-bordered mb-0" id="pendingBookingTable" style="font-size: 13.5px; border: 1px solid #e2e8f0;">
+                            <thead style="background: #f8fafc; color: #475569; border-bottom: 2px solid #cbd5e1;">
+                                <tr>
+                                    <th style="font-weight: 700; color: #334155;">Item Code</th>
+                                    <th style="font-weight: 700; color: #334155;">Item Name</th>
+                                    <th class="text-center" style="font-weight: 700; color: #334155; width: 150px;">Booking Request</th>
+                                    <th class="text-center" style="font-weight: 700; color: #334155; width: 130px;">Current Stock</th>
+                                    <th class="text-center" style="font-weight: 700; color: #334155; width: 130px;">Purchase Order</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pendingBookingTableBody">
+                                <!-- Dynamic rows go here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer" style="background: #f8fafc; border-top: 1px solid #cbd5e1;">
+                    <button type="button" class="btn text-white font-weight-bold" style="background: #64748b; border: none; padding: 7px 20px; border-radius: 6px;" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Initialize popovers with hover and focus trigger
+            $('body').popover({
+                selector: '[data-toggle="popover"]',
+                html: true,
+                trigger: 'hover focus',
+                placement: 'left',
+                container: 'body'
+            });
+
+            // Event delegation for status select dropdowns
+            document.body.addEventListener("change", function (event) {
+                if (event.target && event.target.classList.contains("status-select")) {
+                    const selectElement = event.target;
+                    const orderId = selectElement.getAttribute("data-order-id");
+                    const newStatus = selectElement.value;
+
+                    const formData = new FormData();
+                    formData.append("orderId", orderId);
+                    formData.append("status", newStatus);
+
+                    fetch("/purchaseorders/update-item-status", {
+                        method: "POST",
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert("Error updating status: " + data.message);
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Error updating status:", err);
+                        alert("An error occurred while updating the status.");
+                    });
+                }
+            });
+
+            // View pending booking request button listener
+            const viewPendingBtn = document.getElementById("viewPendingBookingBtn");
+            if (viewPendingBtn) {
+                viewPendingBtn.addEventListener("click", loadPendingBookingSummary);
+            }
+
+            // Dropdown filter change listener
+            const filterDropdown = document.getElementById("itemFilterDropdown");
+            if (filterDropdown) {
+                filterDropdown.addEventListener("change", function () {
+                    renderPendingBookingTable(this.value);
+                });
+            }
+        });
+
+        let pendingBookingData = [];
+
+        function loadPendingBookingSummary() {
+            fetch("/purchaseorders/pending-booking-summary")
+                .then(response => response.json())
+                .then(data => {
+                    pendingBookingData = data;
+                    
+                    // Populate dropdown
+                    const dropdown = document.getElementById("itemFilterDropdown");
+                    dropdown.innerHTML = '<option value="all">All Items</option>';
+                    
+                    data.forEach(item => {
+                        const opt = document.createElement("option");
+                        opt.value = item.itemId;
+                        opt.textContent = item.itemName + " (Code: " + item.itemCode + ")";
+                        dropdown.appendChild(opt);
+                    });
+
+                    renderPendingBookingTable("all");
+                })
+                .catch(err => {
+                    console.error("Error loading pending booking summary:", err);
+                    alert("An error occurred while loading the booking summary.");
+                });
+        }
+
+        function renderPendingBookingTable(filterValue) {
+            const tbody = document.getElementById("pendingBookingTableBody");
+            tbody.innerHTML = "";
+
+            let filtered = pendingBookingData;
+            if (filterValue !== "all") {
+                filtered = pendingBookingData.filter(item => String(item.itemId) === String(filterValue));
+            }
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No items found.</td></tr>';
+                return;
+            }
+
+            filtered.forEach(item => {
+                const tr = document.createElement("tr");
+
+                // Item Code cell
+                const tdCode = document.createElement("td");
+                tdCode.textContent = item.itemCode || "N/A";
+                tr.appendChild(tdCode);
+
+                // Item Name cell
+                const tdName = document.createElement("td");
+                tdName.style.fontWeight = "700";
+                tdName.style.color = "#0f172a";
+                tdName.textContent = item.itemName || "N/A";
+                tr.appendChild(tdName);
+
+                // Booking Request cell
+                const tdBooking = document.createElement("td");
+                tdBooking.className = "text-center font-weight-bold";
+                if (item.bookingRequest > 0) {
+                    tdBooking.innerHTML = '<span class="badge" style="background-color: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 6px;">' + item.bookingRequest + '</span>';
+                } else {
+                    tdBooking.textContent = "0";
+                    tdBooking.style.color = "#64748b";
+                }
+                tr.appendChild(tdBooking);
+
+                // Current Stock cell
+                const tdStock = document.createElement("td");
+                tdStock.className = "text-center font-weight-bold";
+                if (item.currentStock > 0) {
+                    tdStock.innerHTML = '<span class="badge" style="background-color: #dcfce7; color: #166534; border: 1px solid #86efac; font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 6px;">' + item.currentStock + '</span>';
+                } else {
+                    tdStock.innerHTML = '<span class="badge" style="background-color: #fef3c7; color: #92400e; border: 1px solid #fcd34d; font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 6px;">0</span>';
+                }
+                tr.appendChild(tdStock);
+
+                // Purchase Order cell
+                const tdPO = document.createElement("td");
+                tdPO.className = "text-center font-weight-bold";
+                if (item.purchaseOrder > 0) {
+                    tdPO.innerHTML = '<span class="badge" style="background-color: #e0f2fe; color: #075985; border: 1px solid #7dd3fc; font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 6px;">' + item.purchaseOrder + '</span>';
+                } else {
+                    tdPO.textContent = "0";
+                    tdPO.style.color = "#64748b";
+                }
+                tr.appendChild(tdPO);
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        function printModal(modalId) {
+            var modalEl = document.getElementById(modalId);
+            if (!modalEl) return;
+            var modalContent = modalEl.querySelector('.modal-content').cloneNode(true);
+            var modalFooter = modalContent.querySelector('.modal-footer');
+            if (modalFooter) modalFooter.remove();
+            var closeBtn = modalContent.querySelector('.close');
+            if (closeBtn) closeBtn.remove();
+
+            var printWindow = window.open('', '_blank', 'height=750,width=950');
+            printWindow.document.write('<html><head><title>Purchase Order Details</title>');
+            printWindow.document.write('<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">');
+            printWindow.document.write('<style>body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 30px; color: #0f172a; } .badge { border: 1px solid #cbd5e1; font-size: 13px; } table { width: 100%; border-collapse: collapse; margin-top: 15px; } th, td { padding: 10px 12px; border: 1px solid #e2e8f0; } thead { background: #f8fafc !important; color: #334155 !important; } @media print { body { padding: 0; } }</style>');
+            printWindow.document.write('</head><body>');
+            printWindow.document.write(modalContent.innerHTML);
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(function() {
+                printWindow.print();
+                printWindow.close();
+            }, 600);
+        }
+    </script>
+</div>
+
+</html>

@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+
+<div layout:fragment="content">
+
+    <div class="col-lg-12 grid-margin stretch-card">
+        <div class="card" style="border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+            <div class="card-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 16px 24px;">
+                <h4 class="mb-0 text-white font-weight-bold" style="letter-spacing: 0.3px;">
+                    <i class="typcn typcn-book mr-2" style="font-size: 1.3rem; vertical-align: middle;"></i>
+                    Account Ledger Report
+                </h4>
+            </div>
+
+            <div class="card-body p-4">
+
+                <!-- Filter Controls Section -->
+                <div class="row align-items-end mb-4">
+                    <!-- Dropdown 1: Account Type (Supplier vs Vendor) -->
+                    <div class="col-md-4 form-group mb-md-0 mb-3">
+                        <label for="accountTypeSelector" style="font-weight: 700; color: #334155; font-size: 0.9rem;">
+                            Select Account Type <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-control font-weight-bold" id="accountTypeSelector" onchange="updateEntitySelector()" style="border: 1px solid #cbd5e1; border-radius: 4px; height: 42px; color: #334155; font-size: 0.92rem;">
+                            <option value="supplier" selected>Supplier</option>
+                            <option value="vendor">Vendor</option>
+                        </select>
+                    </div>
+
+                    <!-- Dropdown 2: Entity Selection (Suppliers or Vendors) -->
+                    <div class="col-md-5 form-group mb-md-0 mb-3">
+                        <label for="entitySelector" id="entitySelectorLabel" style="font-weight: 700; color: #334155; font-size: 0.9rem;">
+                            Select Supplier <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-control font-weight-bold" id="entitySelector" style="border: 1px solid #cbd5e1; border-radius: 4px; height: 42px; color: #334155; font-size: 0.92rem;" required>
+                            <option value="" selected disabled>-- Select Supplier --</option>
+                            <option th:each="s : ${suppliers}"
+                                    th:value="${s.supplierId}"
+                                    th:text="${s.supplierName}">
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Action Button -->
+                    <div class="col-md-3 form-group mb-0">
+                        <button type="button" class="btn text-white font-weight-bold w-100" id="viewAccountLedgerBtn" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border: none; height: 42px; border-radius: 4px; font-size: 0.95rem; box-shadow: 0 2px 6px rgba(37,99,235,0.25);">
+                            <i class="typcn typcn-eye mr-1"></i> View
+                        </button>
+                    </div>
+                </div>
+
+                <hr style="border-top: 1px solid #e2e8f0; margin-bottom: 25px;">
+
+                <!-- Printable Account Ledger Report Content Container -->
+                <div id="pdfReportContent" style="display: none;">
+
+                    <h5 class="mb-3 font-weight-bold" style="color: #0f172a; font-size: 1.05rem;">
+                        <i class="typcn typcn-th-list mr-1" style="color: #2563eb;"></i> Account Ledger Details
+                    </h5>
+
+                    <div class="table-responsive mb-4">
+                        <table class="table table-bordered mb-0" id="ledgerReportTable" style="font-size: 13.5px; border: 1px solid #cbd5e1;">
+                            <thead>
+                                <tr style="background: #1e293b; color: #ffffff; border-bottom: 2px solid #0f172a;">
+                                    <th style="font-weight: 700; color: #ffffff; padding: 12px 16px;">Booking Number</th>
+                                    <th id="ledgerOrderNoHeader" style="font-weight: 700; color: #ffffff; padding: 12px 16px;">Challan Number</th>
+                                    <th style="font-weight: 700; color: #ffffff; padding: 12px 16px;">Account Detail</th>
+                                    <th class="text-right" style="font-weight: 700; color: #ffffff; padding: 12px 16px;">Payment Asked (₹)</th>
+                                    <th class="text-right" style="font-weight: 700; color: #ffffff; padding: 12px 16px;">Payment Sent / Received (₹)</th>
+                                    <th class="text-center" style="font-weight: 700; color: #ffffff; padding: 12px 16px;">Entry Date</th>
+                                    <th class="text-center" style="font-weight: 700; color: #ffffff; padding: 12px 16px;">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ledgerReportTableBody">
+                                <tr class="no-report-items-row">
+                                    <td colspan="7" class="text-center text-muted py-4" style="background: #edf4fc;">
+                                        Loading account ledger details...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+
+                <!-- Bottom Actions / Download PDF -->
+                <div id="reportActionContainer" class="mt-4 d-flex justify-content-end" style="display: none;">
+                    <button type="button" class="btn text-white font-weight-bold" id="downloadPdfBtn" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: none; padding: 10px 22px; border-radius: 4px; font-size: 0.92rem; box-shadow: 0 2px 6px rgba(15,23,42,0.2);">
+                        <i class="typcn typcn-document-text mr-1"></i> Download PDF
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Hidden Thymeleaf Data Store for Dynamic Dropdown Switching -->
+    <div id="suppliersData" style="display:none;">
+        <option value="" selected disabled>-- Select Supplier --</option>
+        <option th:each="s : ${suppliers}" th:value="${s.supplierId}" th:text="${s.supplierName}"></option>
+    </div>
+    <div id="vendorsData" style="display:none;">
+        <option value="" selected disabled>-- Select Vendor --</option>
+        <option th:each="v : ${vendors}" th:value="${v.vendorId}" th:text="${v.vendorName}"></option>
+    </div>
+
+    <!-- PDF Document Preview Modal Window -->
+    <div class="modal fade" id="pdfPreviewModal" tabindex="-1" role="dialog" aria-labelledby="pdfPreviewModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered" role="document" style="max-width: 900px;">
+            <div class="modal-content shadow-lg border-0" style="border-radius: 8px; overflow: hidden;">
+
+                <div class="modal-header text-white" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 16px 24px;">
+                    <h5 class="modal-title font-weight-bold text-white mb-0" id="pdfPreviewModalLabel">
+                        <i class="typcn typcn-eye mr-2" style="color: #38bdf8;"></i> Report Document Preview
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" style="opacity: 0.9;">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body bg-light p-4" style="max-height: 70vh; overflow-y: auto;">
+                    <!-- Preview Sheet Container -->
+                    <div id="modalPdfPreviewContainer" class="card p-4 shadow-sm bg-white border" style="color: #2b2b2b; border-radius: 6px;">
+                        <!-- Generated preview content will be injected here -->
+                    </div>
+                </div>
+
+                <div class="modal-footer bg-white py-3 px-4">
+                    <button type="button" class="btn font-weight-bold" data-dismiss="modal" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 7px 18px; border-radius: 4px;">
+                        <i class="typcn typcn-times mr-1"></i> Close
+                    </button>
+                    <button type="button" class="btn text-white font-weight-bold" id="modalPrintBtn" style="background: #334155; border: none; padding: 7px 18px; border-radius: 4px;">
+                        <i class="typcn typcn-printer mr-1"></i> Print
+                    </button>
+                    <button type="button" class="btn text-white font-weight-bold" id="modalConfirmDownloadBtn" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border: none; padding: 7px 20px; border-radius: 4px; box-shadow: 0 2px 6px rgba(37,99,235,0.25);">
+                        <i class="typcn typcn-download mr-1"></i> Confirm & Download PDF
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Include html2pdf.js for client-side PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        @media print {
+            .no-print, .no-print * {
+                display: none !important;
+            }
+            .sidebar, .navbar, .card-header, #viewAccountLedgerBtn, #accountTypeSelector, #entitySelector, .mt-4, .modal-backdrop, .modal-header, .modal-footer {
+                display: none !important;
+            }
+            .card {
+                border: none !important;
+                box-shadow: none !important;
+            }
+        }
+    </style>
+
+    <!-- Scripts -->
+    <!-- Scripts -->
+    <script>
+        function updateEntitySelector() {
+            var typeSelect = document.getElementById('accountTypeSelector');
+            var entitySelect = document.getElementById('entitySelector');
+            var entityLabel = document.getElementById('entitySelectorLabel');
+            var pdfContent = document.getElementById('pdfReportContent');
+            var actionContainer = document.getElementById('reportActionContainer');
+
+            if (pdfContent) pdfContent.style.display = 'none';
+            if (actionContainer) actionContainer.style.display = 'none';
+
+            if (!typeSelect || !entitySelect) return;
+            var selectedType = typeSelect.value;
+
+            if (selectedType === 'supplier') {
+                if (entityLabel) entityLabel.innerHTML = 'Select Supplier <span class="text-danger">*</span>';
+                var supData = document.getElementById('suppliersData');
+                if (supData && entitySelect) entitySelect.innerHTML = supData.innerHTML;
+            } else if (selectedType === 'vendor') {
+                if (entityLabel) entityLabel.innerHTML = 'Select Vendor <span class="text-danger">*</span>';
+                var venData = document.getElementById('vendorsData');
+                if (venData && entitySelect) entitySelect.innerHTML = venData.innerHTML;
+            }
+        }
+
+        function renderAccountLedgerRows(items, entityName, accountType) {
+            var tbody = document.getElementById('ledgerReportTableBody');
+            var headerEl = document.getElementById('ledgerOrderNoHeader');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            if (headerEl) {
+                headerEl.textContent = (accountType === 'vendor') ? 'Purchase Number' : 'Challan Number';
+            }
+
+            if (!items || items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4" style="background: #edf4fc;">No ledger payment transactions found for this account.</td></tr>';
+                return;
+            }
+
+            var html = '';
+            items.forEach(function(item, idx) {
+                var bookingNo = item.bookingNo || item.bookingId || ('BR-' + (1000 + idx + 1));
+                var orderNo = '—';
+                if (accountType === 'vendor') {
+                    orderNo = item.purchaseOrderNo || item.purchaseNo || item.poNo || '—';
+                } else {
+                    orderNo = item.salesOrderNo || item.salesNo || '—';
+                }
+
+                var accountDetail = item.accountDetail || item.itemName || item.itemDetails || entityName || 'Account Detail';
+                
+                var paymentAsked = item.totalCost != null ? item.totalCost : ((item.quantity || 0) * (item.rate || 0));
+                var paymentSentRecv = item.paymentAmount != null ? item.paymentAmount : (item.receivedAmount != null ? item.receivedAmount : paymentAsked);
+                
+                var entryDateVal = item.entryDate || item.paidDate || '—';
+                var statusText = item.paymentStatus || item.statusStr || item.status || 'Active';
+                var rowBg = (idx % 2 === 1) ? '#f8fafc' : '#ffffff';
+
+                var badgeStyle = 'background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;';
+                if (statusText.indexOf('Full') !== -1 || statusText.indexOf('3') !== -1 || statusText.indexOf('Complete') !== -1) {
+                    badgeStyle = 'background: #dcfce7; color: #15803d; border: 1px solid #86efac;';
+                } else if (statusText.indexOf('Partial') !== -1 || statusText.indexOf('2') !== -1) {
+                    badgeStyle = 'background: #fef3c7; color: #b45309; border: 1px solid #fde68a;';
+                }
+
+                html += '<tr style="background: ' + rowBg + ';">' +
+                        '<td style="padding: 10px 16px; color: #0f172a;" class="font-weight-bold">' + bookingNo + '</td>' +
+                        '<td style="padding: 10px 16px; color: #0f172a;" class="font-weight-bold">' + orderNo + '</td>' +
+                        '<td style="padding: 10px 16px; color: #334155;" class="font-weight-bold">' + accountDetail + '</td>' +
+                        '<td class="text-right font-weight-bold" style="padding: 10px 16px; color: #0f172a;">₹' + Number(paymentAsked).toFixed(2) + '</td>' +
+                        '<td class="text-right font-weight-bold" style="padding: 10px 16px; color: #16a34a;">₹' + Number(paymentSentRecv).toFixed(2) + '</td>' +
+                        '<td class="text-center font-weight-bold" style="padding: 10px 16px; color: #475569;">' + entryDateVal + '</td>' +
+                        '<td class="text-center" style="padding: 10px 16px;"><span class="badge px-3 py-1 font-weight-bold" style="' + badgeStyle + '">' + statusText + '</span></td>' +
+                        '</tr>';
+            });
+            tbody.innerHTML = html;
+        }
+
+        function loadAccountLedgerReport() {
+            var accountTypeEl = document.getElementById('accountTypeSelector');
+            var entitySelectEl = document.getElementById('entitySelector');
+            var pdfReportContent = document.getElementById('pdfReportContent');
+            var reportActionContainer = document.getElementById('reportActionContainer');
+            var tbody = document.getElementById('ledgerReportTableBody');
+
+            if (!accountTypeEl || !entitySelectEl) return;
+
+            var accountType = accountTypeEl.value;
+            var entityId = entitySelectEl.value;
+
+            if (!entityId) {
+                if (pdfReportContent) pdfReportContent.style.display = 'none';
+                if (reportActionContainer) reportActionContainer.style.display = 'none';
+                return;
+            }
+
+            if (pdfReportContent) pdfReportContent.style.display = 'block';
+            if (tbody) tbody.innerHTML = '<tr class="no-report-items-row"><td colspan="7" class="text-center text-muted py-4" style="background: #edf4fc;">Loading account ledger details...</td></tr>';
+
+            fetch('/reports/account-ledger/data?type=' + encodeURIComponent(accountType) + '&id=' + encodeURIComponent(entityId))
+                .then(function(res) { return res.json(); })
+                .then(function(res) {
+                    if (res.error) {
+                        if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4" style="background: #f8fafc;">' + res.error + '</td></tr>';
+                        return;
+                    }
+
+                    window.currentReportData = res;
+                    var summary = res.summary || {};
+                    var type = res.type;
+
+                    var entityLabel = document.getElementById('summaryEntityLabel');
+                    var entityNameEl = document.getElementById('summaryEntityName');
+                    var totalQtyEl = document.getElementById('summaryTotalQty');
+                    var totalCostEl = document.getElementById('summaryTotalCost');
+                    var statusContainerEl = document.getElementById('summaryStatusContainer');
+
+                    if (entityLabel) entityLabel.textContent = (type === 'supplier' ? 'Supplier Name' : 'Vendor Name');
+                    
+                    var selectedOptionText = entitySelectEl.options[entitySelectEl.selectedIndex] ? entitySelectEl.options[entitySelectEl.selectedIndex].text : '';
+                    var rawEntityName = summary.vendorName || summary.supplierName || selectedOptionText;
+                    var selectedId = res.id || entityId;
+
+                    if (entityNameEl) {
+                        if (type === 'supplier' && selectedId) {
+                            var viewUrl = '/supplier-accounts/view/supplier/' + selectedId;
+                            entityNameEl.innerHTML = '<a href="' + viewUrl + '" style="color: #2563eb; text-decoration: underline; font-weight: bold;" title="View Receive Payment Details for ' + rawEntityName + '">' + rawEntityName + ' <i class="typcn typcn-export ml-1" style="font-size: 0.9rem;"></i></a>';
+                        } else if (type === 'vendor' && selectedId) {
+                            var viewUrl = '/accounts/view/vendor/' + selectedId;
+                            entityNameEl.innerHTML = '<a href="' + viewUrl + '" style="color: #2563eb; text-decoration: underline; font-weight: bold;" title="View Account Payment Details for ' + rawEntityName + '">' + rawEntityName + ' <i class="typcn typcn-export ml-1" style="font-size: 0.9rem;"></i></a>';
+                        } else {
+                            entityNameEl.textContent = rawEntityName;
+                        }
+                    }
+
+                    var totalQty = summary.totalFullyReceivedQty || summary.totalQty || 0;
+                    var totalCost = summary.totalFullyReceivedCost || summary.totalCost || 0.0;
+                    var isPaid = summary.isFullyPaid;
+
+                    if (totalQtyEl) totalQtyEl.textContent = totalQty;
+                    if (totalCostEl) totalCostEl.textContent = '₹' + Number(totalCost).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+                    if (statusContainerEl) {
+                        var statusBadgeHtml = '';
+                        if (isPaid === true) {
+                            statusBadgeHtml = '<span class="badge badge-success font-weight-bold px-3 py-1" style="background-color: #dcfce7; color: #15803d; border: 1px solid #86efac;">Full Payment</span>';
+                        } else if (isPaid === false) {
+                            statusBadgeHtml = '<span class="badge badge-warning font-weight-bold px-3 py-1" style="background-color: #fef3c7; color: #b45309; border: 1px solid #fde68a;">Partially Paid / Pending</span>';
+                        } else {
+                            statusBadgeHtml = '<span class="badge badge-secondary font-weight-bold px-3 py-1">Active</span>';
+                        }
+                        statusContainerEl.innerHTML = statusBadgeHtml;
+                    }
+
+                    var items = summary.items || summary.bookingRequests || [];
+                    renderAccountLedgerRows(items, rawEntityName, type);
+
+                    if (pdfReportContent) pdfReportContent.style.display = 'block';
+                    if (reportActionContainer) reportActionContainer.style.display = 'flex';
+                })
+                .catch(function(err) {
+                    console.error("Error fetching account ledger data:", err);
+                    if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4" style="background: #f8fafc;">Error loading ledger report. Please try again.</td></tr>';
+                });
+        }
+
+        function initLedgerPage() {
+            updateEntitySelector();
+
+            var viewBtn = document.getElementById('viewAccountLedgerBtn');
+            if (viewBtn) {
+                viewBtn.onclick = function() {
+                    var entitySelectEl = document.getElementById('entitySelector');
+                    var accountTypeEl = document.getElementById('accountTypeSelector');
+                    if (!entitySelectEl || !entitySelectEl.value) {
+                        alert('Please select a ' + (accountTypeEl && accountTypeEl.value === 'supplier' ? 'Supplier' : 'Vendor') + ' to view the account ledger report.');
+                        return;
+                    }
+                    loadAccountLedgerReport();
+                };
+            }
+
+            var entitySelectEl = document.getElementById('entitySelector');
+            if (entitySelectEl) {
+                entitySelectEl.onchange = loadAccountLedgerReport;
+            }
+
+            var downloadPdfBtn = document.getElementById('downloadPdfBtn');
+            if (downloadPdfBtn) {
+                downloadPdfBtn.onclick = function() {
+                    if (!window.currentReportData) return;
+                    var now = new Date();
+                    var formattedDate = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
+
+                    var pdfReportContent = document.getElementById('pdfReportContent');
+                    var contentHtml = pdfReportContent ? pdfReportContent.innerHTML : '';
+                    var summaryEntityName = document.getElementById('summaryEntityName');
+                    var entityName = summaryEntityName ? summaryEntityName.textContent : '';
+                    var typeSelect = document.getElementById('accountTypeSelector');
+                    var accountType = (typeSelect && typeSelect.value === 'supplier') ? 'SUPPLIER ACCOUNT LEDGER REPORT' : 'VENDOR ACCOUNT LEDGER REPORT';
+
+                    var modalContainer = document.getElementById('modalPdfPreviewContainer');
+                    if (modalContainer) {
+                        modalContainer.innerHTML = '<div style="font-family: Arial, sans-serif;">' +
+                            '<div class="text-center mb-4 border-bottom pb-3">' +
+                            '<h3 style="color: #0f172a; font-weight: bold; margin-bottom: 5px;">Cylinder Supply Software</h3>' +
+                            '<h5 style="color: #2563eb; font-weight: 600; margin-bottom: 5px;">' + accountType + ' - ' + entityName + '</h5>' +
+                            '<span class="badge badge-light border" style="font-size: 0.85rem;">Generated On: ' + formattedDate + '</span>' +
+                            '</div>' +
+                            contentHtml +
+                            '<div class="mt-4 pt-3 border-top d-flex justify-content-between text-muted" style="font-size: 0.8rem;">' +
+                            '<span>Official Account Ledger Audit Document</span>' +
+                            '<span>Page 1 of 1</span>' +
+                            '</div>' +
+                            '</div>';
+                    }
+
+                    if (window.$ && $('#pdfPreviewModal').modal) {
+                        $('#pdfPreviewModal').modal('show');
+                    } else {
+                        var modalEl = document.getElementById("pdfPreviewModal");
+                        if (modalEl) {
+                            modalEl.classList.add("show");
+                            modalEl.style.display = "block";
+                            document.body.classList.add("modal-open");
+                        }
+                    }
+                };
+            }
+
+            var modalConfirmDownloadBtn = document.getElementById('modalConfirmDownloadBtn');
+            if (modalConfirmDownloadBtn) {
+                modalConfirmDownloadBtn.onclick = function() {
+                    var container = document.getElementById('modalPdfPreviewContainer');
+                    var opt = {
+                        margin:       0.4,
+                        filename:     'Account_Ledger_Report.pdf',
+                        image:        { type: 'jpeg', quality: 0.98 },
+                        html2canvas:  { scale: 2 },
+                        jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
+                    };
+
+                    if (window.html2pdf) {
+                        html2pdf().set(opt).from(container).save().then(function() {
+                            if (window.$ && $('#pdfPreviewModal').modal) {
+                                $('#pdfPreviewModal').modal('hide');
+                            }
+                        }).catch(function(err) {
+                            console.error("html2pdf error fallback to print:", err);
+                            window.print();
+                        });
+                    } else {
+                        window.print();
+                    }
+                };
+            }
+
+            var modalPrintBtn = document.getElementById('modalPrintBtn');
+            if (modalPrintBtn) {
+                modalPrintBtn.onclick = function() {
+                    window.print();
+                };
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initLedgerPage);
+        } else {
+            initLedgerPage();
+        }
+    </script>
+</div>
+
+</html>
+

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+
+<div layout:fragment="content">
+    <style>
+        .view-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.07), 0 4px 6px -2px rgba(0,0,0,0.04);
+            background: #ffffff;
+        }
+        .view-card-header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            padding: 14px 24px;
+            color: #ffffff;
+        }
+        .view-metadata-bar {
+            background: #ffffff;
+            padding: 18px 24px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .view-meta-item {
+            font-size: 14px;
+            color: #475569;
+        }
+        .view-meta-item strong {
+            color: #0f172a;
+            font-weight: 700;
+        }
+        .view-status-badge {
+            background-color: #ffe4e6;
+            color: #be123c;
+            border: 1px solid #fecdd3;
+            font-weight: 600;
+            font-size: 12px;
+            padding: 3px 12px;
+            border-radius: 12px;
+            display: inline-block;
+        }
+        .view-table {
+            border: 1px solid #e2e8f0;
+            font-size: 14px;
+            margin-bottom: 0;
+        }
+        .view-table thead th {
+            background: #f1f5f9;
+            color: #334155;
+            font-weight: 700;
+            border-bottom: 2px solid #cbd5e1;
+            padding: 12px 16px;
+        }
+        .view-table tbody td {
+            padding: 14px 16px;
+            vertical-align: middle;
+            color: #334155;
+            border-color: #e2e8f0;
+        }
+        .view-table tbody tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .printable-area, .printable-area * {
+                visibility: visible;
+            }
+            .printable-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+
+    <div class="col-lg-12 grid-margin stretch-card printable-area">
+        <div class="card view-card w-100">
+            <!-- Header Bar -->
+            <div class="view-card-header d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <span class="mr-2" style="display:inline-block; width:8px; height:8px; background:#38bdf8; border-radius:50%;"></span>
+                    <h5 class="mb-0 text-white font-weight-bold" style="letter-spacing: 0.3px; font-size: 1.05rem;">
+                        Booking Request Details - <span th:text="${bookingNo}">BR-52478</span>
+                    </h5>
+                </div>
+                <a th:href="@{/bookingrequest}" class="text-white font-weight-bold no-print" style="font-size: 1.3rem; text-decoration: none; opacity: 0.85; transition: opacity 0.2s;" title="Close">&times;</a>
+            </div>
+
+            <div class="card-body p-0">
+                <!-- Metadata Header Row -->
+                <div class="view-metadata-bar">
+                    <div class="row align-items-center">
+                        <div class="col-md-3 col-6 mb-2 mb-md-0 view-meta-item">
+                            <span>Order ID:</span> <strong th:text="${orderId}">12</strong>
+                        </div>
+                        <div class="col-md-4 col-6 mb-2 mb-md-0 view-meta-item">
+                            <span>Supplier Name:</span> <strong th:text="${supplierNames}">HP Gas Distributor</strong>
+                        </div>
+                        <div class="col-md-3 col-6 text-md-right view-meta-item">
+                            <span>Entry Date:</span> <strong th:text="${#dates.format(#dates.createNow(), 'dd-MMM-yyyy')}">24-Jul-2026</strong>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-12 view-meta-item d-flex align-items-center">
+                            <span class="mr-2">Status:</span>
+                            <span class="view-status-badge" th:text="${status}">create</span>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- Booked Item Detail Table -->
+                <h5 class="mb-3" style="font-weight: 600;">Saved Booking Item Details</h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                        <tr>
+                            <th>Item Code</th>
+                            <th>Item Name</th>
+                            <th>Item Type</th>
+                            <th>Rate</th>
+                            <th>Qty</th>
+                            <th>Total Cost</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="m : ${allItemMappings}" th:if="${not #lists.isEmpty(allItemMappings)}">
+                            <td th:text="${m.itemId != null && itemMap.get(m.itemId) != null ? itemMap.get(m.itemId).itemCode : 'N/A'}"></td>
+                            <td th:text="${m.itemId != null && itemMap.get(m.itemId) != null ? itemMap.get(m.itemId).itemName : 'N/A'}"></td>
+                            <td th:text="${m.itemId != null && itemMap.get(m.itemId) != null && itemMap.get(m.itemId).type != null ? itemMap.get(m.itemId).type.typeName : 'N/A'}"></td>
+                            <td th:text="${m.bookingRequest != null && m.bookingRequest.rate != null ? '₹' + #numbers.formatDecimal(m.bookingRequest.rate, 1, 2) : 'N/A'}"></td>
+                            <td th:text="${m.quantity != null ? m.quantity : 0}"></td>
+                            <td th:text="${m.totalCost != null ? '₹' + #numbers.formatDecimal(m.totalCost, 1, 2) : 'N/A'}"></td>
+                        </tr>
+                        <tr th:each="r : ${requests}" th:if="${#lists.isEmpty(allItemMappings) && r.bookId != null}">
+                            <td th:text="${itemMap.get(r.bookId) != null ? itemMap.get(r.bookId).itemCode : 'N/A'}"></td>
+                            <td th:text="${itemMap.get(r.bookId) != null ? itemMap.get(r.bookId).itemName : 'N/A'}"></td>
+                            <td th:text="${itemMap.get(r.bookId) != null && itemMap.get(r.bookId).type != null ? itemMap.get(r.bookId).type.typeName : 'N/A'}"></td>
+                            <td th:text="${itemMap.get(r.bookId) != null && itemMap.get(r.bookId).rate != null ? '₹' + #numbers.formatDecimal(itemMap.get(r.bookId).rate, 1, 2) : 'N/A'}"></td>
+                            <td th:text="${r.quantity != null ? r.quantity : 0}"></td>
+                            <td th:text="${itemMap.get(r.bookId) != null && itemMap.get(r.bookId).rate != null && r.quantity != null ? '₹' + #numbers.formatDecimal(itemMap.get(r.bookId).rate * r.quantity, 1, 2) : 'N/A'}"></td>
+                        </tr>
+                        </tbody>
+                        <tfoot>
+                        <tr style="font-weight: bold; background-color: #f3f3f3;">
+                            <td colspan="5" style="text-align: right; font-weight: bold;">Grand Total:</td>
+                            <td th:text="${'₹' + #numbers.formatDecimal(grandTotal, 1, 2)}" style="font-weight: bold;"></td>
+                        </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <!-- Footer Action Buttons -->
+                <div class="card-footer bg-white d-flex justify-content-between align-items-center p-3 border-top no-print">
+                    <button type="button" onclick="window.print()" class="btn text-white font-weight-bold" style="background: #10b981; border: none; padding: 8px 22px; border-radius: 6px; box-shadow: 0 2px 4px rgba(16,185,129,0.25);">
+                        <i class="typcn typcn-printer mr-1" style="font-size: 1.1rem; vertical-align: middle;"></i> Print
+                    </button>
+                    <a th:href="@{/bookingrequest}" class="btn text-white font-weight-bold" style="background: #64748b; border: none; padding: 8px 26px; border-radius: 6px;">
+                        Close
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</html>

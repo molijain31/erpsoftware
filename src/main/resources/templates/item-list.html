@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+
+<div layout:fragment="content">
+    <div class="col-lg-12 grid-margin stretch-card">
+        <div class="card" style="border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+            <div class="card-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 16px 24px;">
+                <h4 class="mb-0 text-white font-weight-bold" style="letter-spacing: 0.3px;">
+                    <i class="typcn typcn-th-list mr-2" style="font-size: 1.3rem; vertical-align: middle;"></i>
+                    Item List
+                </h4>
+                <a th:href="@{/items/new}" class="btn btn-sm text-white font-weight-bold" style="background: #10b981; border: none; padding: 6px 16px; border-radius: 6px; box-shadow: 0 2px 4px rgba(16,185,129,0.25);">
+                    <i class="typcn typcn-plus"></i> Add Item
+                </a>
+            </div>
+
+            <div class="card-body p-4">
+                <div class="table-responsive">
+                    <table id='dataTable' class="table table-hover table-bordered mb-0" style="font-size: 13.5px; border: 1px solid #e2e8f0;">
+                        <thead style="background: #f8fafc; color: #475569; border-bottom: 2px solid #cbd5e1;">
+                        <tr>
+                            <th class="text-center" style="width: 70px; font-weight: 700; color: #334155;">S.No</th>
+                            <th style="width: 110px; font-weight: 700; color: #334155; white-space: nowrap;">Item Code</th>
+                            <th style="font-weight: 700; color: #334155; white-space: nowrap;">Item Name</th>
+                            <th class="text-center" style="font-weight: 700; color: #334155; white-space: nowrap;">Unit</th>
+                            <th class="text-center" style="font-weight: 700; color: #334155; white-space: nowrap;">Type</th>
+                            <th class="text-right" style="width: 120px; font-weight: 700; color: #334155; white-space: nowrap;">Rate</th>
+                            <th class="text-center" style="width: 140px; font-weight: 700; color: #334155; white-space: nowrap;">Entry Date</th>
+                            <th class="text-center" style="width: 110px; font-weight: 700; color: #334155; white-space: nowrap;">Status</th>
+                            <th class="text-center" style="width: 140px; font-weight: 700; color: #334155; white-space: nowrap;">Action</th>
+                        </tr>
+                        </thead>
+
+                        <tbody>
+                        <tr th:each="i, iStat : ${items}" th:if="${not #lists.isEmpty(items)}">
+                            <td class="text-center font-weight-bold" style="color: #64748b; white-space: nowrap;" th:text="${iStat.count}"></td>
+                            <td style="font-weight: 700; color: #0f172a; white-space: nowrap;" th:text="${i.itemCode}"></td>
+                            <td style="color: #334155; font-weight: 600; white-space: nowrap;" th:text="${i.itemName}"></td>
+                            <td class="text-center" style="color: #475569;" th:text="${i.unit != null ? i.unit.unitName : ''}"></td>
+                            <td class="text-center" style="color: #475569;" th:text="${i.type != null ? i.type.typeName : ''}"></td>
+                            <td class="text-right font-weight-bold" style="color: #0f172a;" th:text="${i.rate != null} ? '₹' + ${#numbers.formatDecimal(i.rate, 1, 2)} : '₹0.00'"></td>
+                            <td class="text-center" style="color: #475569;" th:text="${i.entryDate != null ? #dates.format(i.entryDate, 'dd-MMM-yyyy') : ''}"></td>
+                            <td class="text-center">
+                                <span th:if="${i.isValid == 1}" class="badge" style="background-color: #dcfce7; color: #15803d; border: 1px solid #86efac; font-weight: 600; padding: 5px 12px; border-radius: 6px;">Active</span>
+                                <span th:if="${i.isValid != 1}" class="badge" style="background-color: #ffe4e6; color: #be123c; border: 1px solid #fecdd3; font-weight: 600; padding: 5px 12px; border-radius: 6px;">Inactive</span>
+                            </td>
+
+                            <td class="text-center">
+                                <div class="d-flex justify-content-center align-items-center">
+                                    <a th:href="@{/items/edit/{id}(id=${i.itemId})}" class="btn btn-sm text-white font-weight-bold mr-2" style="background: #3b82f6; border: none; padding: 5px 12px; border-radius: 6px; box-shadow: 0 2px 4px rgba(59,130,246,0.25);" title="Edit">
+                                        <i class="typcn typcn-edit"></i> Edit
+                                    </a>
+                                    <a th:href="@{/items/delete/{id}(id=${i.itemId})}"
+                                       class="btn btn-sm text-white font-weight-bold" style="background: #ef4444; border: none; padding: 5px 12px; border-radius: 6px; box-shadow: 0 2px 4px rgba(239,68,68,0.25);"
+                                       title="Delete"
+                                       onclick="return confirm('Are you sure you want to delete this record?')">
+                                        <i class="typcn typcn-trash"></i> Delete
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <tr th:if="${#lists.isEmpty(items)}">
+                            <td colspan="9" class="text-center text-muted py-4">
+                                No records found.
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</html>

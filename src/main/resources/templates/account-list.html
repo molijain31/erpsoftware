@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+
+<div layout:fragment="content">
+    <style>
+        .po-link {
+            color: #0f172a;
+            font-weight: 700;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: color 0.15s ease, text-decoration 0.15s ease;
+        }
+        .po-link:hover {
+            color: #4f46e5;
+            text-decoration: underline;
+        }
+    </style>
+    <div class="col-lg-12 grid-margin stretch-card">
+        <div class="card" style="border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+            <div class="card-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 16px 24px;">
+                <h4 class="mb-0 text-white font-weight-bold" style="letter-spacing: 0.3px;">
+                    <i class="typcn typcn-th-list mr-2" style="font-size: 1.3rem; vertical-align: middle;"></i>
+                    Account Payment List
+                </h4>
+            </div>
+
+            <div class="card-body p-4">
+
+                <!-- Success & Error Alerts -->
+                <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                    <span th:text="${successMessage}"></span>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <span th:text="${errorMessage}"></span>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="table-responsive">
+                    <table id="dataTable" class="table table-hover table-bordered mb-0" style="font-size: 13.5px; border: 1px solid #e2e8f0;">
+                        <thead style="background: #f8fafc; color: #475569; border-bottom: 2px solid #cbd5e1;">
+                        <tr>
+                            <th style="font-weight: 700; color: #334155; white-space: nowrap;">Vendor Name</th>
+                            <th class="text-center" style="width: 130px; font-weight: 700; color: #334155; white-space: nowrap;">Last Mod.Date</th>
+                            <th class="text-right" style="width: 140px; font-weight: 700; color: #334155; white-space: nowrap;">Last Mod.Paid</th>
+                            <th class="text-right" style="width: 140px; font-weight: 700; color: #334155; white-space: nowrap;">Pending Amount</th>
+                            <th class="text-center" style="font-weight: 700; color: #334155; white-space: nowrap;">PO Order</th>
+                            <th class="text-center" style="width: 100px; font-weight: 700; color: #334155; white-space: nowrap;">Status</th>
+                            <th class="text-center no-sort" style="width: 210px; font-weight: 700; color: #334155; white-space: nowrap;">Action</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+
+                        <tr th:each="a, aStat : ${accounts}" th:if="${not #lists.isEmpty(accounts)}">
+                            <td style="font-weight: 700; color: #0f172a; white-space: nowrap;">
+                                <span style="white-space: nowrap;" th:text="${a.vendorName != null and a.vendorName != '' ? a.vendorName : (a.accountName != null and a.accountName != '' ? a.accountName : 'Vendor #' + (a.vendorId != null ? a.vendorId : a.accountId))}"></span>
+                            </td>
+                            <td class="text-center" style="color: #475569; white-space: nowrap;" th:text="${a.modifiedDate != null} ? ${#dates.format(a.modifiedDate, 'dd-MMM-yyyy')} : '-'"></td>
+                            <td class="text-right font-weight-bold" style="white-space: nowrap; color: #15803d;"
+                                th:text="${a.lastModPaid != null} ? '₹' + ${#numbers.formatDecimal(a.lastModPaid, 1, 2)} : '₹0.00'"></td>
+                            <td class="text-right font-weight-bold" style="white-space: nowrap;"
+                                th:style="${a.pendingAmount != null and a.pendingAmount > 0} ? 'color: #dc2626;' : 'color: #475569;'"
+                                th:text="${a.pendingAmount != null} ? '₹' + ${#numbers.formatDecimal(a.pendingAmount, 1, 2)} : '₹0.00'"></td>
+                            <td class="text-center" style="color: #334155; white-space: nowrap; max-width: 280px;">
+                                <span th:if="${a.poLinks == null or a.poLinks == ''}">-</span>
+                                <span th:if="${a.poLinks != null and a.poLinks != ''}"
+                                      class="po-links-cell"
+                                      th:utext="${a.poLinks}"></span>
+                            </td>
+                            <td class="text-center" style="white-space: nowrap;">
+                                <span th:if="${a.isValid != null and a.isValid == 1}" class="badge" style="background-color: #dcfce7; color: #15803d; border: 1px solid #86efac; font-weight: 600; padding: 5px 12px; border-radius: 6px;">Active</span>
+                                <span th:if="${a.isValid == null or a.isValid != 1}" class="badge" style="background-color: #ffe4e6; color: #be123c; border: 1px solid #fecdd3; font-weight: 600; padding: 5px 12px; border-radius: 6px;">Inactive</span>
+                            </td>
+                            <td class="text-center" style="white-space: nowrap;">
+                                <div class="d-flex justify-content-center align-items-center">
+                                    <a th:href="@{/accounts/view/vendor/{vendorId}(vendorId=${a.vendorId})}"
+                                       class="btn btn-sm text-white font-weight-bold mr-2"
+                                       style="background: #3b82f6; border: none; padding: 6px 14px; border-radius: 6px; box-shadow: 0 2px 4px rgba(59,130,246,0.25);"
+                                       title="View Details">
+                                        <i class="typcn typcn-eye"></i> View
+                                    </a>
+                                    <!-- Send button when NOT fully paid -->
+                                    <a th:if="${a.isFullyPaid == null or a.isFullyPaid == false}"
+                                       th:href="@{/accounts/new(vendorId=${a.vendorId})}"
+                                       class="btn btn-sm text-white font-weight-bold"
+                                       style="background: #10b981; border: none; padding: 6px 14px; border-radius: 6px; box-shadow: 0 2px 4px rgba(16,185,129,0.25);"
+                                       title="Send Payment">
+                                        <i class="typcn typcn-credit-card"></i> Send
+                                    </a>
+                                    <!-- Fully Paid button when fully paid — still clickable, opens form -->
+                                    <a th:if="${a.isFullyPaid != null and a.isFullyPaid == true}"
+                                       th:href="@{/accounts/new(vendorId=${a.vendorId})}"
+                                       class="btn btn-sm text-white font-weight-bold"
+                                       style="background: #10b981; border: none; padding: 6px 14px; border-radius: 6px; box-shadow: 0 2px 4px rgba(16,185,129,0.25);"
+                                       title="View / Send Payment">
+                                        <i class="typcn typcn-tick"></i> Fully Paid
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Show if no records -->
+                        <tr th:if="${#lists.isEmpty(accounts)}">
+                            <td colspan="7" class="text-center text-muted py-4">
+                                No records found. Click "Send" to create a new record.
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Vendor Payment History Modal -->
+    <div class="modal fade" id="vendorPaymentHistoryModal" tabindex="-1" role="dialog" aria-labelledby="vendorHistoryModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl" role="document" style="max-width: 1150px; width: 92vw;">
+            <div class="modal-content" style="border-radius: 10px; overflow: hidden; border: none;">
+                <div class="modal-header text-white" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 16px 24px;">
+                    <h5 class="modal-title font-weight-bold text-white mb-0" id="vendorHistoryModalLabel">
+                        <i class="typcn typcn-history mr-2" style="color: #a78bfa;"></i>
+                        Vendor Payment & Order History
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" style="opacity: 0.9;">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-4" style="background: #f8fafc;">
+                    <div class="card mb-4" style="border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.03);">
+                        <div class="card-body p-3">
+                            <div class="row align-items-center">
+                                <div class="col-md-6">
+                                    <small class="text-muted font-weight-bold d-block text-uppercase" style="font-size: 11px; letter-spacing: 0.5px;">Vendor Name</small>
+                                    <h5 class="font-weight-bold mb-0 text-dark" id="modalHistoryVendorName">—</h5>
+                                </div>
+                                <div class="col-md-6 text-md-right">
+                                    <small class="text-muted font-weight-bold d-block text-uppercase" style="font-size: 11px; letter-spacing: 0.5px;">Total Payment Sent</small>
+                                    <h5 class="font-weight-bold mb-0" style="color: #10b981;" id="modalHistoryTotalSent">₹0.00</h5>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="vendorHistoryContentContainer">
+                        <div class="text-center text-muted py-4">
+                            <i class="typcn typcn-arrow-sync mr-2"></i> Loading vendor payment history...
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="background: #ffffff; border-top: 1px solid #e2e8f0; padding: 12px 24px;">
+                    <button type="button" class="btn btn-secondary font-weight-bold" data-dismiss="modal" style="border-radius: 6px; padding: 8px 20px;">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.showVendorPaymentHistory = function(targetVendorId) {
+            let vId = targetVendorId;
+            if (!vId) {
+                alert("Vendor details not found to view history.");
+                return;
+            }
+
+            const container = document.getElementById("vendorHistoryContentContainer");
+            if (container) {
+                container.innerHTML = `<div class="text-center text-muted py-4"><i class="typcn typcn-arrow-sync mr-2"></i> Loading vendor payment history...</div>`;
+            }
+
+            $('#vendorPaymentHistoryModal').modal('show');
+
+            fetch('/accounts/vendor/' + vId + '/history')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.vendorName) {
+                        document.getElementById("modalHistoryVendorName").textContent = data.vendorName;
+                    }
+                    const totalPaid = parseFloat(data.totalPaidAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    document.getElementById("modalHistoryTotalSent").textContent = '₹' + totalPaid;
+
+                    const payments = data.payments || [];
+                    const summary = data.summary || {};
+                    const poItems = summary.items || [];
+
+                    let html = "";
+
+                    html += `
+                        <div class="mb-4">
+                            <h6 class="mb-2 font-weight-bold text-dark d-flex align-items-center" style="font-size: 0.95rem;">
+                                <i class="typcn typcn-document-text mr-2" style="color: #3b82f6; font-size: 1.2rem;"></i>
+                                Purchase Orders Payment Breakdown (${poItems.length})
+                            </h6>
+                    `;
+
+                    if (poItems.length === 0) {
+                        html += `
+                            <div class="text-center py-3 text-muted" style="background: #ffffff; border: 1px dashed #cbd5e1; border-radius: 6px; font-size: 13px;">
+                                No purchase orders found for this vendor.
+                            </div>
+                        `;
+                    } else {
+                        html += `
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered mb-0 bg-white" style="font-size: 13px; border: 1px solid #cbd5e1;">
+                                    <thead style="background: #f1f5f9; color: #334155; font-weight: 700;">
+                                        <tr>
+                                            <th class="text-center" style="width: 50px;">Sl No.</th>
+                                            <th>PO Number</th>
+                                            <th class="text-center">Entry Date</th>
+                                            <th class="text-center">Total Quantity</th>
+                                            <th class="text-right">Total Cost (₹)</th>
+                                            <th class="text-right">Paid Amount (₹)</th>
+                                            <th class="text-center">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                        `;
+                        poItems.forEach((po, idx) => {
+                            const cost = parseFloat(po.totalCost || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                            const paid = parseFloat(po.paymentAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                            let statusBadge = '<span class="badge" style="background-color: #ffe4e6; color: #be123c; border: 1px solid #fecdd3; font-weight: 600; padding: 4px 10px; border-radius: 6px;">Unpaid</span>';
+                            if (po.statusCode === 3) {
+                                statusBadge = '<span class="badge" style="background-color: #dcfce7; color: #15803d; border: 1px solid #86efac; font-weight: 600; padding: 4px 10px; border-radius: 6px;">Full Payment</span>';
+                            } else if (po.statusCode === 2) {
+                                statusBadge = '<span class="badge" style="background-color: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-weight: 600; padding: 4px 10px; border-radius: 6px;">Partially Paid</span>';
+                            }
+                            html += `
+                                <tr>
+                                    <td class="text-center font-weight-bold" style="color: #64748b;">${idx + 1}</td>
+                                    <td><strong style="color: #0f172a;">${po.poNo || po.purchaseOrderNo || '—'}</strong></td>
+                                    <td class="text-center" style="color: #475569;">${po.entryDate || '—'}</td>
+                                    <td class="text-center"><span class="badge" style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; font-weight: 700; border-radius: 4px; padding: 3px 8px;">${po.totalQuantity || 0}</span></td>
+                                    <td class="text-right font-weight-bold" style="color: #0f172a;">₹${cost}</td>
+                                    <td class="text-right font-weight-bold" style="color: #10b981;">₹${paid}</td>
+                                    <td class="text-center">${statusBadge}</td>
+                                </tr>
+                            `;
+                        });
+                        html += `
+                                    </tbody>
+                                </table>
+                            </div>
+                        `;
+                    }
+                    html += `</div>`;
+
+                    html += `
+                        <div>
+                            <h6 class="mb-2 font-weight-bold text-dark d-flex align-items-center" style="font-size: 0.95rem;">
+                                <i class="typcn typcn-credit-card mr-2" style="color: #8b5cf6; font-size: 1.2rem;"></i>
+                                Recorded Payment Receipts History (${payments.length})
+                            </h6>
+                    `;
+
+                    if (payments.length === 0) {
+                        html += `
+                            <div class="text-center py-3 text-muted" style="background: #ffffff; border: 1px dashed #cbd5e1; border-radius: 6px; font-size: 13px;">
+                                No previous payment receipts recorded yet for this vendor.
+                            </div>
+                        `;
+                    } else {
+                        html += `
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered mb-0 bg-white" style="font-size: 13px; border: 1px solid #cbd5e1;">
+                                    <thead style="background: #f1f5f9; color: #334155; font-weight: 700;">
+                                        <tr>
+                                            <th class="text-center" style="width: 50px;">Sl No.</th>
+                                            <th class="text-center">Entry Date</th>
+                                            <th>Account / Vendor Name</th>
+                                            <th class="text-center">Payment Mode</th>
+                                            <th>Reference / Transaction No</th>
+                                            <th class="text-right">Sent Amount (₹)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                        `;
+                        payments.forEach((p, idx) => {
+                            const amt = parseFloat(p.amountReceived || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                            const entryDate = p.entryDate ? new Date(p.entryDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+                            const refNo = p.neftNo || p.rtgsNo || p.chequeBook || '—';
+                            html += `
+                                <tr>
+                                    <td class="text-center font-weight-bold" style="color: #64748b;">${idx + 1}</td>
+                                    <td class="text-center" style="color: #475569;">${entryDate}</td>
+                                    <td><strong style="color: #0f172a;">${p.accountName || p.vendorName || '—'}</strong></td>
+                                    <td class="text-center"><span class="badge" style="background: #e2e8f0; color: #1e293b; font-weight: 600; padding: 3px 8px; border-radius: 4px;">${p.paymentMode || 'NEFT'}</span></td>
+                                    <td style="color: #334155;">${refNo}</td>
+                                    <td class="text-right font-weight-bold" style="color: #10b981;">₹${amt}</td>
+                                </tr>
+                            `;
+                        });
+                        html += `
+                                    </tbody>
+                                </table>
+                            </div>
+                        `;
+                    }
+                    html += `</div>`;
+
+                    container.innerHTML = html;
+                })
+                .catch(err => {
+                    console.error("Error loading vendor payment history:", err);
+                    container.innerHTML = `<div class="text-center text-danger py-4">Error loading vendor payment history.</div>`;
+                });
+        };
+
+        window.showPODetailsModal = function(orderId) {
+            if (!orderId) {
+                alert("Purchase Order ID not found.");
+                return;
+            }
+            const modalBody = document.getElementById("poDetailsModalBody");
+            const modalTitle = document.getElementById("poDetailsModalTitle");
+            modalTitle.textContent = "Purchase Order Details";
+            modalBody.innerHTML = `<div class="text-center text-muted py-4"><i class="typcn typcn-arrow-sync mr-2"></i> Loading purchase order details...</div>`;
+            $('#poDetailsModal').modal('show');
+
+            fetch('/purchaseorders/po-details/' + orderId)
+                .then(r => r.json())
+                .then(po => {
+                    if (!po || !po.orderId) {
+                        modalBody.innerHTML = `<div class="text-center text-danger py-4">Purchase order details not found.</div>`;
+                        return;
+                    }
+                    modalTitle.textContent = "Purchase Order Details - " + (po.purchaseOrderNo || 'PO-' + po.orderId);
+
+                    let statusBadge = '<span class="badge" style="background-color: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; font-weight: 600; padding: 5px 12px; border-radius: 6px;">Created</span>';
+                    if (po.status === 2) {
+                        statusBadge = '<span class="badge" style="background-color: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-weight: 600; padding: 5px 12px; border-radius: 6px;">Partially Received</span>';
+                    } else if (po.status === 3) {
+                        statusBadge = '<span class="badge" style="background-color: #dcfce7; color: #15803d; border: 1px solid #86efac; font-weight: 600; padding: 5px 12px; border-radius: 6px;">Fully Received</span>';
+                    } else if (po.status === 4) {
+                        statusBadge = '<span class="badge" style="background-color: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-weight: 600; padding: 5px 12px; border-radius: 6px;">Closed</span>';
+                    }
+
+                    const entryDateStr = po.entryDate ? new Date(po.entryDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+                    const txnAcc = po.transactionAccount ? `<span class="badge" style="background: #e2e8f0; color: #1e293b; font-weight: 700; padding: 3px 8px; border-radius: 4px;">${po.transactionAccount}</span>` : '<span class="text-muted">—</span>';
+                    const grandTotal = parseFloat(po.totalCost || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+                    let html = `
+                        <div class="row mb-3">
+                            <div class="col-md-3 col-6 mb-2">
+                                <strong style="color: #475569; font-size: 13px;">PO:</strong>
+                                <div style="font-weight: 700; color: #4f46e5; font-size: 14px;">${po.purchaseOrderNo || ('PO-' + po.orderId)}</div>
+                            </div>
+                            <div class="col-md-3 col-6 mb-2">
+                                <strong style="color: #475569; font-size: 13px;">Vendor Name:</strong>
+                                <div style="font-weight: 700; color: #0f172a; font-size: 14px;">${po.vendorName || '—'}</div>
+                            </div>
+                            <div class="col-md-3 col-6 mb-2">
+                                <strong style="color: #475569; font-size: 13px;">Entry Date:</strong>
+                                <div style="color: #334155; font-size: 14px;">${entryDateStr}</div>
+                            </div>
+                            <div class="col-md-3 col-6 mb-2">
+                                <strong style="color: #475569; font-size: 13px;">Status:</strong>
+                                <div>${statusBadge}</div>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover table-bordered mb-0" style="font-size: 13.5px; border: 1px solid #e2e8f0;">
+                                <thead style="background: #f8fafc; color: #475569; border-bottom: 2px solid #cbd5e1;">
+                                    <tr>
+                                        <th style="font-weight: 700; color: #334155; text-align: center; width: 50px;">Sl No.</th>
+                                        <th style="font-weight: 700; color: #334155;">Item Code</th>
+                                        <th style="font-weight: 700; color: #334155;">Item Name</th>
+                                        <th style="font-weight: 700; color: #334155;">Item Type</th>
+                                        <th class="text-right" style="font-weight: 700; color: #334155;">Rate (₹)</th>
+                                        <th class="text-center" style="font-weight: 700; color: #334155;">Quantity</th>
+                                        <th class="text-center" style="font-weight: 700; color: #334155;">Received Qty</th>
+                                        <th class="text-right" style="font-weight: 700; color: #334155;">Total Cost (₹)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+
+                    const details = po.details || [];
+                    if (details.length === 0) {
+                        html += `<tr><td colspan="8" class="text-center text-muted py-3">No item details found.</td></tr>`;
+                    } else {
+                        details.forEach((d, idx) => {
+                            const rateFmt = parseFloat(d.rate || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                            const costFmt = parseFloat(d.totalCost || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                            html += `
+                                <tr>
+                                    <td class="text-center font-weight-bold" style="color: #64748b;">${idx + 1}</td>
+                                    <td style="color: #334155;">${d.itemCode || 'N/A'}</td>
+                                    <td style="font-weight: 700; color: #0f172a;">${d.itemName || 'N/A'}</td>
+                                    <td style="color: #475569;">${d.itemType || 'N/A'}</td>
+                                    <td class="text-right" style="color: #334155;">₹${rateFmt}</td>
+                                    <td class="text-center" style="color: #334155;">${d.quantity || 0}</td>
+                                    <td class="text-center font-weight-bold" style="color: #15803d;">${d.receivedQuantity || 0}</td>
+                                    <td class="text-right font-weight-bold" style="color: #0f172a;">₹${costFmt}</td>
+                                </tr>
+                            `;
+                        });
+                    }
+
+                    html += `
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="text-right mt-3">
+                            <h5 style="color: #0f172a; margin-bottom: 0;"><strong>Grand Total: </strong><span style="color: #10b981; font-weight: 700;">₹${grandTotal}</span></h5>
+                        </div>
+                    `;
+
+                    modalBody.innerHTML = html;
+                })
+                .catch(err => {
+                    console.error("Error loading PO details:", err);
+                    modalBody.innerHTML = `<div class="text-center text-danger py-4">Error loading purchase order details.</div>`;
+                });
+        };
+
+        window.printPODetailsModal = function() {
+            const printContent = document.getElementById("poDetailsModalBody").innerHTML;
+            const title = document.getElementById("poDetailsModalTitle").textContent;
+            const printWindow = window.open('', '', 'height=700,width=900');
+            printWindow.document.write('<html><head><title>' + title + '</title>');
+            printWindow.document.write('<link rel="stylesheet" href="/vendors/css/vendor.bundle.base.css">');
+            printWindow.document.write('<style>body{font-family:sans-serif;padding:24px;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid #cbd5e1;padding:8px 12px;} th{background:#f8fafc;} .text-right{text-align:right;} .text-center{text-align:center;} .badge{padding:3px 8px;border-radius:4px;font-size:12px;font-weight:600;display:inline-block;}</style>');
+            printWindow.document.write('</head><body>');
+            printWindow.document.write('<h3 style="margin-bottom:16px;">' + title + '</h3>');
+            printWindow.document.write(printContent);
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(function() {
+                printWindow.print();
+                printWindow.close();
+            }, 500);
+        };
+    </script>
+
+    <!-- Purchase Order Details Modal -->
+    <div class="modal fade" id="poDetailsModal" tabindex="-1" role="dialog" aria-labelledby="poDetailsModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document" style="max-width: 950px; width: 90vw;">
+            <div class="modal-content" style="border-radius: 10px; overflow: hidden; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
+                <div class="modal-header text-white" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 16px 24px;">
+                    <div class="d-flex align-items-center">
+                        <i class="typcn typcn-document-text mr-2" style="font-size: 1.4rem;"></i>
+                        <h5 class="modal-title font-weight-bold text-white mb-0" id="poDetailsModalTitle" style="letter-spacing: 0.3px;">Purchase Order Details</h5>
+                    </div>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" style="opacity: 0.9;">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body text-left p-4" id="poDetailsModalBody">
+                    <div class="text-center text-muted py-4">
+                        <i class="typcn typcn-arrow-sync mr-2"></i> Loading purchase order details...
+                    </div>
+                </div>
+                <div class="modal-footer d-flex justify-content-between align-items-center" style="background: #f8fafc; border-top: 1px solid #cbd5e1; padding: 12px 24px;">
+                    <button type="button" class="btn text-white font-weight-bold" style="background: #10b981; border: none; padding: 7px 20px; border-radius: 6px; box-shadow: 0 2px 4px rgba(16,185,129,0.25);" onclick="printPODetailsModal()">
+                        <i class="typcn typcn-printer mr-1"></i> Print
+                    </button>
+                    <button type="button" class="btn text-white font-weight-bold" style="background: #64748b; border: none; padding: 7px 20px; border-radius: 6px;" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</html>

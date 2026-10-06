@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+
+<div layout:fragment="content">
+    <style>
+        .po-view-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            background: #ffffff;
+        }
+        .po-view-header {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            padding: 16px 24px;
+            color: #ffffff;
+        }
+        .po-meta-bar {
+            background: #f8fafc;
+            padding: 18px 24px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .po-meta-label {
+            font-size: 13px;
+            color: #64748b;
+            font-weight: 600;
+            margin-bottom: 3px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .po-meta-val {
+            font-size: 15px;
+            color: #0f172a;
+            font-weight: 700;
+        }
+        .po-table thead th {
+            background: #f1f5f9;
+            color: #334155;
+            font-weight: 700;
+            border-bottom: 2px solid #cbd5e1;
+            padding: 12px 16px;
+            font-size: 13.5px;
+        }
+        .po-table tbody td {
+            padding: 12px 16px;
+            vertical-align: middle;
+            color: #334155;
+            border-color: #e2e8f0;
+            font-size: 13.5px;
+        }
+        .po-table tbody tr:hover {
+            background-color: #f8fafc;
+        }
+
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .printable-area, .printable-area * {
+                visibility: visible;
+            }
+            .printable-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+
+    <div class="col-lg-12 grid-margin stretch-card printable-area">
+        <div class="card po-view-card w-100">
+            <!-- Header Bar -->
+            <div class="po-view-header d-flex flex-wrap justify-content-between align-items-center" style="gap: 12px;">
+                <div class="d-flex align-items-center">
+                    <i class="typcn typcn-document-text mr-2" style="font-size: 1.5rem;"></i>
+                    <h4 class="mb-0 text-white font-weight-bold" style="letter-spacing: 0.3px;">
+                        Purchase Order Details — <span th:text="${po.purchaseOrderNo}">PO-00000</span>
+                    </h4>
+                </div>
+                <div class="d-flex align-items-center no-print" style="gap: 10px;">
+                    <span th:if="${po.status == 1 or po.status == null}" class="badge" style="background-color: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; font-weight: 700; padding: 6px 14px; border-radius: 6px;">Created</span>
+                    <span th:if="${po.status == 2}" class="badge" style="background-color: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-weight: 700; padding: 6px 14px; border-radius: 6px;">Partially Received</span>
+                    <span th:if="${po.status == 3}" class="badge" style="background-color: #dcfce7; color: #15803d; border: 1px solid #86efac; font-weight: 700; padding: 6px 14px; border-radius: 6px;">Fully Received</span>
+                    <span th:if="${po.status == 4}" class="badge" style="background-color: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-weight: 700; padding: 6px 14px; border-radius: 6px;">Closed</span>
+
+                    <button type="button" class="btn text-white font-weight-bold" style="background: #10b981; border: none; padding: 6px 16px; border-radius: 6px;" onclick="window.print()">
+                        <i class="typcn typcn-printer mr-1"></i> Print
+                    </button>
+                    <a href="javascript:history.back()" class="btn font-weight-bold" style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; padding: 6px 16px; border-radius: 6px;">
+                        <i class="typcn typcn-arrow-left mr-1"></i> Back
+                    </a>
+                </div>
+            </div>
+
+            <!-- Metadata Info Grid -->
+            <div class="po-meta-bar">
+                <div class="row">
+                    <div class="col-md-3 col-6 mb-3 mb-md-0">
+                        <div class="po-meta-label">PO</div>
+                        <div class="po-meta-val" style="color: #4f46e5;" th:text="${po.purchaseOrderNo}">PO-00000</div>
+                    </div>
+                    <div class="col-md-3 col-6 mb-3 mb-md-0">
+                        <div class="po-meta-label">Vendor Name</div>
+                        <div class="po-meta-val" th:text="${po.vendorName != null && !po.vendorName.isEmpty() ? po.vendorName : ('Vendor #' + po.vendorId)}">Vendor Name</div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="po-meta-label">Entry Date</div>
+                        <div class="po-meta-val" th:text="${po.entryDate != null ? #dates.format(po.entryDate, 'dd-MMM-yyyy') : (po.modifiedDate != null ? #dates.format(po.modifiedDate, 'dd-MMM-yyyy') : '—')}">—</div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="po-meta-label">Status</div>
+                        <div class="po-meta-val">
+                            <span th:if="${po.status == 1 or po.status == null}" class="badge" style="background-color: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; font-weight: 700; padding: 5px 12px; border-radius: 6px;">Created</span>
+                            <span th:if="${po.status == 2}" class="badge" style="background-color: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-weight: 700; padding: 5px 12px; border-radius: 6px;">Partially Received</span>
+                            <span th:if="${po.status == 3}" class="badge" style="background-color: #dcfce7; color: #15803d; border: 1px solid #86efac; font-weight: 700; padding: 5px 12px; border-radius: 6px;">Fully Received</span>
+                            <span th:if="${po.status == 4}" class="badge" style="background-color: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-weight: 700; padding: 5px 12px; border-radius: 6px;">Closed</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table of Items -->
+            <div class="card-body p-4">
+                <h5 class="mb-3 font-weight-bold" style="color: #0f172a; font-size: 1.05rem;">
+                    <i class="typcn typcn-th-list mr-1" style="color: #4f46e5;"></i>
+                    Purchase Order Item Details
+                </h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered po-table mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-center" style="width: 50px;">Sl No.</th>
+                                <th>Item Code</th>
+                                <th>Item Name</th>
+                                <th>Item Type</th>
+                                <th class="text-right">Rate (₹)</th>
+                                <th class="text-center">Ordered Qty</th>
+                                <th class="text-center">Received Qty</th>
+                                <th class="text-right">Total Cost (₹)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="detail, stat : ${po.details}">
+                                <td class="text-center font-weight-bold" style="color: #64748b;" th:text="${stat.count}">1</td>
+                                <td style="color: #334155; font-weight: 600;" th:text="${detail.item != null ? detail.item.itemCode : 'N/A'}"></td>
+                                <td style="font-weight: 700; color: #0f172a;" th:text="${detail.item != null ? detail.item.itemName : 'N/A'}"></td>
+                                <td style="color: #475569;" th:text="${detail.item != null && detail.item.type != null ? detail.item.type.typeName : 'N/A'}"></td>
+                                <td class="text-right font-weight-bold" style="color: #334155;" th:text="${detail.rate != null ? '₹' + #numbers.formatDecimal(detail.rate, 1, 2) : '₹0.00'}">₹0.00</td>
+                                <td class="text-center font-weight-bold" style="color: #0f172a;" th:text="${detail.quantity != null ? detail.quantity : 0}">0</td>
+                                <td class="text-center font-weight-bold" style="color: #15803d;" th:text="${detail.receivedQuantity != null ? detail.receivedQuantity : 0}">0</td>
+                                <td class="text-right font-weight-bold" style="color: #0f172a;" th:text="${detail.totalCost != null ? '₹' + #numbers.formatDecimal(detail.totalCost, 1, 2) : '₹0.00'}">₹0.00</td>
+                            </tr>
+                            <tr th:if="${po.details == null or po.details.isEmpty()}">
+                                <td colspan="8" class="text-center text-muted py-4">No item details found for this purchase order.</td>
+                            </tr>
+                        </tbody>
+                        <tfoot style="background: #f8fafc;">
+                            <tr>
+                                <td colspan="5" class="text-right font-weight-bold" style="font-size: 15px; color: #0f172a;">Grand Total:</td>
+                                <td class="text-center font-weight-bold" style="font-size: 15px; color: #0f172a;" th:text="${po.totalQuantity != null ? po.totalQuantity : 0}">0</td>
+                                <td></td>
+                                <td class="text-right font-weight-bold" style="font-size: 16px; color: #15803d;" th:text="${po.totalCost != null ? '₹' + #numbers.formatDecimal(po.totalCost, 1, 2) : '₹0.00'}">₹0.00</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <!-- Footer Buttons -->
+                <div class="mt-4 pt-3 d-flex justify-content-between align-items-center border-top no-print">
+                    <a href="javascript:history.back()" class="btn font-weight-bold" style="background: #64748b; color: #ffffff; border: none; padding: 8px 22px; border-radius: 6px;">
+                        <i class="typcn typcn-arrow-left mr-1"></i> Back
+                    </a>
+                    <button type="button" class="btn text-white font-weight-bold" style="background: #10b981; border: none; padding: 8px 22px; border-radius: 6px; box-shadow: 0 2px 4px rgba(16,185,129,0.25);" onclick="window.print()">
+                        <i class="typcn typcn-printer mr-1"></i> Print Order
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</html>

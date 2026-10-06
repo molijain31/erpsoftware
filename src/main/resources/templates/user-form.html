@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+
+<div layout:fragment="content">
+    <div class="row">
+        <div class="col-md-12 grid-margin stretch-card">
+            <div class="card" style="border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                <div class="card-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 16px 24px;">
+                    <h4 class="mb-0 text-white font-weight-bold" style="letter-spacing: 0.3px;">
+                        <i class="typcn typcn-document-add mr-2" style="font-size: 1.3rem; vertical-align: middle;"></i>
+                        User Master Form
+                    </h4>
+                    <a th:href="@{/users}" class="btn btn-sm font-weight-bold" style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; padding: 6px 14px; border-radius: 6px;">
+                        <i class="typcn typcn-arrow-left"></i> Back to List
+                    </a>
+                </div>
+                <div class="card-body p-4">
+                    <form class="forms-sample needs-validation" th:action="@{/users/save}" th:object="${user}" method="post" novalidate>
+
+                        <input type="hidden" th:field="*{userId}">
+
+                        <div class="row">
+                            <!-- Left Column -->
+                            <div class="col-md-6">
+                                <!-- User Name -->
+                                <div class="form-group row align-items-center mb-2">
+                                    <label for="userName" class="col-4 col-form-label font-weight-bold">User Name <span class="text-danger">*</span></label>
+                                    <div class="col-8">
+                                        <input type="text" class="form-control form-control-sm" id="userName" th:field="*{userName}" placeholder="Enter User Name" required="required">
+                                        <div class="invalid-feedback">Please provide a valid User Name.</div>
+                                    </div>
+                                </div>
+
+                                <!-- Password -->
+                                <div class="form-group row align-items-center mb-2">
+                                    <label for="password" class="col-4 col-form-label font-weight-bold">Password <span class="text-danger">*</span></label>
+                                    <div class="col-8">
+                                        <div class="input-group input-group-sm">
+                                            <input type="password" class="form-control form-control-sm" id="password" th:field="*{password}" placeholder="Enter Password" required="required">
+                                            <div class="input-group-append">
+                                                <button class="btn btn-outline-secondary btn-sm" type="button" id="togglePassword" style="border: 1px solid #ced4da; border-left: none; padding: 0.25rem 0.5rem;">
+                                                    <i class="typcn typcn-eye" id="eyeIcon"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="invalid-feedback">Please provide a valid Password.</div>
+                                    </div>
+                                </div>
+
+                                <!-- Email -->
+                                <div class="form-group row align-items-center mb-2">
+                                    <label for="email" class="col-4 col-form-label font-weight-bold">Email <span class="text-danger">*</span></label>
+                                    <div class="col-8">
+                                        <input type="email" class="form-control form-control-sm" id="email" th:field="*{email}" placeholder="Enter Email" required="required">
+                                        <div class="invalid-feedback">Please provide a valid Email.</div>
+                                    </div>
+                                </div>
+
+                                <!-- District -->
+                                <div class="form-group row align-items-center mb-2">
+                                    <label for="district" class="col-4 col-form-label font-weight-bold">District <span class="text-danger">*</span></label>
+                                    <div class="col-8">
+                                        <input type="text" class="form-control form-control-sm" id="district" th:field="*{district}" placeholder="Enter District" required="required">
+                                        <div class="invalid-feedback">Please provide a valid District.</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right Column -->
+                            <div class="col-md-6">
+                                <!-- LoginID -->
+                                <div class="form-group row align-items-center mb-2">
+                                    <label for="loginID" class="col-4 col-form-label font-weight-bold">LoginID <span class="text-danger">*</span></label>
+                                    <div class="col-8">
+                                        <input type="text" class="form-control form-control-sm" id="loginID" th:field="*{loginID}" placeholder="Enter LoginID" required="required">
+                                        <div class="invalid-feedback">Please provide a valid LoginID.</div>
+                                    </div>
+                                </div>
+
+                                <!-- Mobile Number -->
+                                <div class="form-group row align-items-center mb-2">
+                                    <label for="mobileNo" class="col-4 col-form-label font-weight-bold">Mobile <span class="text-danger">*</span></label>
+                                    <div class="col-8">
+                                        <input type="text" class="form-control form-control-sm" id="mobileNo" th:field="*{mobileNo}" placeholder="Enter Mobile Number" required="required">
+                                        <div class="invalid-feedback">Please provide a valid Mobile Number.</div>
+                                    </div>
+                                </div>
+
+                                <!-- User Type -->
+                                <div class="form-group row align-items-center mb-2">
+                                    <label for="userType" class="col-4 col-form-label font-weight-bold">User Type <span class="text-danger">*</span></label>
+                                    <div class="col-8">
+                                        <select class="form-control form-control-sm" id="userType" th:field="*{userType}" required="required">
+                                            <option value="" disabled selected>Select User Type</option>
+                                            <option value="1">Admin</option>
+                                            <option value="2">Vendor</option>
+                                        </select>
+                                        <div class="invalid-feedback">Please select a User Type.</div>
+                                    </div>
+                                </div>
+
+                                <!-- State -->
+                                <div class="form-group row align-items-center mb-2">
+                                    <label for="state" class="col-4 col-form-label font-weight-bold">State <span class="text-danger">*</span></label>
+                                    <div class="col-8">
+                                        <input type="text" class="form-control form-control-sm" id="state" th:field="*{state}" placeholder="Enter State" required="required">
+                                        <div class="invalid-feedback">Please provide a valid State.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-center pt-2">
+                            <button type="submit" class="btn text-white font-weight-bold mr-2" style="background: #10b981; border: none; padding: 9px 20px; border-radius: 6px; box-shadow: 0 2px 4px rgba(16,185,129,0.25);">
+                                <i class="typcn typcn-tick"></i> Save
+                            </button>
+                            <a th:href="@{/users}" class="btn text-white font-weight-bold mr-2" style="background: #64748b; border: none; padding: 9px 20px; border-radius: 6px;">
+                                <i class="typcn typcn-arrow-left"></i> Back to List
+                            </a>
+                            <button type="reset" class="btn font-weight-bold" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 9px 20px; border-radius: 6px;">Reset</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Client-side validation & toggle password logic -->
+    <script>
+        (function () {
+            'use strict';
+            window.addEventListener('load', function () {
+                var forms = document.getElementsByClassName('needs-validation');
+                var validation = Array.prototype.filter.call(forms, function (form) {
+                    form.addEventListener('submit', function (event) {
+                        if (form.checkValidity() === false) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                        form.classList.add('was-validated');
+                    }, false);
+                });
+
+                var togglePassword = document.getElementById('togglePassword');
+                if (togglePassword) {
+                    togglePassword.addEventListener('click', function () {
+                        var passwordInput = document.getElementById('password');
+                        var eyeIcon = document.getElementById('eyeIcon');
+                        if (passwordInput.type === 'password') {
+                            passwordInput.type = 'text';
+                            eyeIcon.classList.remove('typcn-eye');
+                            eyeIcon.classList.add('typcn-eye-outline');
+                        } else {
+                            passwordInput.type = 'password';
+                            eyeIcon.classList.remove('typcn-eye-outline');
+                            eyeIcon.classList.add('typcn-eye');
+                        }
+                    });
+                }
+            }, false);
+        })();
+    </script>
+</div>
+
+</html>

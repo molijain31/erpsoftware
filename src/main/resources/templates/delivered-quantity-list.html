@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+
+<div layout:fragment="content">
+    <div class="col-lg-12 grid-margin stretch-card">
+        <div class="card" style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+            <!-- Card Header -->
+            <div class="card-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 18px 24px;">
+                <h4 class="mb-0 text-white font-weight-bold" style="letter-spacing: 0.4px; display: flex; align-items: center;">
+                    <i class="typcn typcn-shopping-bag mr-2" style="font-size: 1.5rem; color: #10b981;"></i>
+                    Delivered Quantity
+                </h4>
+            </div>
+
+            <div class="card-body p-4">
+                <!-- Flash messages -->
+                <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+                    <i class="typcn typcn-tick mr-1"></i> <span th:text="${successMessage}"></span>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                    <i class="typcn typcn-warning mr-1"></i> <span th:text="${errorMessage}"></span>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <!-- Main Data Table -->
+                <div class="table-responsive">
+                    <table id="dataTable" class="table table-hover table-bordered mb-0" style="font-size: 13.5px; border: 1px solid #e2e8f0;">
+                        <thead style="background: #f8fafc; color: #475569; border-bottom: 2px solid #cbd5e1;">
+                        <tr>
+                            <th style="font-weight: 700; color: #334155;">Booking Number</th>
+                            <th style="font-weight: 700; color: #334155;">Challan Order ID</th>
+                            <th style="font-weight: 700; color: #334155;">Supplier Name</th>
+                            <th class="text-center" style="width: 120px; font-weight: 700; color: #334155;">Items</th>
+                            <th class="text-right" style="width: 140px; font-weight: 700; color: #334155;">Total Amount</th>
+                            <th class="text-center" style="width: 130px; font-weight: 700; color: #334155;">Status</th>
+                            <th class="text-center no-sort" style="width: 120px; font-weight: 700; color: #334155;">Action</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+
+                        <!-- Empty state -->
+                        <tr th:if="${#lists.isEmpty(deliveredSalesOrders)}">
+                            <td colspan="7" class="text-center py-5" style="color: #94a3b8;">
+                                <i class="typcn typcn-info-large d-block mb-2" style="font-size: 2.5rem; color: #cbd5e1;"></i>
+                                <span class="font-weight-bold" style="font-size: 1rem;">No delivered quantity records found.</span>
+                            </td>
+                        </tr>
+
+                        <!-- Delivered Quantity Orders Rows -->
+                        <tr th:each="so : ${deliveredSalesOrders}" th:if="${not #lists.isEmpty(deliveredSalesOrders)}">
+                            <!-- Booking Number -->
+                            <td style="font-weight: 700; color: #0f172a; white-space: nowrap;" th:text="${so.bookingNo != null ? so.bookingNo : ('CO-' + so.orderId)}"></td>
+
+                            <!-- Challan Order ID -->
+                            <td style="font-weight: 700; color: #0f172a; white-space: nowrap;" th:text="${so.salesOrderNo != null ? so.salesOrderNo : ('CO-' + so.orderId)}"></td>
+
+                            <!-- Supplier Name -->
+                            <td style="white-space: nowrap;" th:text="${so.supplierName != null ? so.supplierName : '—'}"></td>
+
+                            <!-- Items — popover on hover/focus -->
+                            <td class="text-center">
+                                <a href="javascript:void(0)"
+                                   class="badge"
+                                   style="background: #e2e8f0; color: #1e293b; font-weight: 700; padding: 5px 10px; border-radius: 6px; text-decoration: none; cursor: pointer;"
+                                   data-toggle="popover"
+                                   data-trigger="hover focus"
+                                   data-html="true"
+                                   title="Items in Booking Request"
+                                   th:data-content="${bookingItemNames.get(so.bookingNo) != null ? #strings.listJoin(bookingItemNames.get(so.bookingNo), '&lt;br/&gt;') : 'No items'}"
+                                   th:text="${(bookingItemNames.get(so.bookingNo) != null ? bookingItemNames.get(so.bookingNo).size() : 0) + ' Items'}">
+                                </a>
+                            </td>
+
+                            <!-- Total Amount -->
+                            <td class="text-right font-weight-bold" style="color: #0f172a; white-space: nowrap;" th:text="${so.totalCost != null ? '₹' + #numbers.formatDecimal(so.totalCost, 1, 2) : '₹0.00'}"></td>
+
+                            <!-- Status Badge -->
+                            <td class="text-center" style="white-space: nowrap;">
+                                <span th:if="${so.status == 1}" class="badge" style="background-color: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; font-weight: 600; padding: 5px 12px; border-radius: 6px;">
+                                    <i class="typcn typcn-time mr-1"></i> Pending
+                                </span>
+                                <span th:if="${so.status == 2}" class="badge" style="background-color: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-weight: 600; padding: 5px 12px; border-radius: 6px;">
+                                    <i class="typcn typcn-time mr-1"></i> Partially Delivered
+                                </span>
+                                <span th:if="${so.status == 3 or (so.status != 1 and so.status != 2)}" class="badge" style="background-color: #dcfce7; color: #15803d; border: 1px solid #86efac; font-weight: 600; padding: 5px 12px; border-radius: 6px;">
+                                    <i class="typcn typcn-tick mr-1"></i> Delivered
+                                </span>
+                            </td>
+
+                            <!-- Actions: View & Update Buttons -->
+                            <td style="text-align: center; white-space: nowrap;">
+                                <a th:href="@{/delivered-sales/details/{bookingNo}(bookingNo=${so.bookingNo != null ? so.bookingNo : so.salesOrderNo})}"
+                                   class="btn btn-sm text-white font-weight-bold mr-1"
+                                   style="background: #0284c7; border: none; border-radius: 6px; padding: 5px 12px; box-shadow: 0 2px 4px rgba(2,132,199,0.25);"
+                                   title="View Details">
+                                    <i class="typcn typcn-eye"></i> View
+                                </a>
+                                <a th:href="@{/delivered-sales/edit/{bookingNo}(bookingNo=${so.bookingNo != null ? so.bookingNo : so.salesOrderNo})}"
+                                   class="btn btn-sm text-white font-weight-bold"
+                                   style="background: #6366f1; border: none; border-radius: 6px; padding: 5px 12px; box-shadow: 0 2px 4px rgba(99,102,241,0.25);"
+                                   title="Update Delivered Quantity">
+                                    <i class="typcn typcn-edit"></i> Update
+                                </a>
+                            </td>
+                        </tr>
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Initialize popovers with hover and focus trigger
+            $('body').popover({
+                selector: '[data-toggle="popover"]',
+                html: true,
+                trigger: 'hover focus',
+                placement: 'left',
+                container: 'body'
+            });
+        });
+    </script>
+</div>
+
+</html>

@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+
+<div layout:fragment="content">
+
+    <div class="col-12 grid-margin stretch-card">
+        <div class="card" style="border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+
+            <div class="card-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 16px 24px;">
+                <h4 class="mb-0 text-white font-weight-bold" style="letter-spacing: 0.3px;" th:text="${purchaseOrder.orderId != null ? 'Edit Purchase Order - ' + purchaseOrder.purchaseOrderNo : 'Create Purchase Order'}">Create Purchase Order</h4>
+                <a th:href="@{/purchaseorders}" class="btn btn-sm font-weight-bold" style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; padding: 6px 14px; border-radius: 6px;">
+                    <i class="typcn typcn-arrow-left"></i> Back to List
+                </a>
+            </div>
+
+            <div class="card-body p-4">
+                <!-- Alert Messages -->
+                <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <span th:text="${errorMessage}">Error Message</span>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                    <span th:text="${successMessage}">Success Message</span>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <form th:action="@{/purchaseorders/save}" method="post" id="purchaseOrderForm">
+                    <input type="hidden" name="orderId" th:value="${purchaseOrder.orderId}" />
+
+                    <div class="row align-items-end">
+
+                        <!-- Vendor Dropdown (Displays Vendor Name + PayPal, sends vendorId) -->
+                        <div class="col-md-8 mb-3">
+                            <label style="font-weight: 600;">Vendor Name <span class="text-danger">*</span></label>
+                            <select class="form-control"
+                                    id="vendor"
+                                    name="vendorId"
+                                    th:disabled="${purchaseOrder.orderId != null}"
+                                    required>
+                                <option value="">Select Vendor</option>
+                                <option th:each="vendor : ${vendors}"
+                                        th:value="${vendor.vendorId}"
+                                        th:selected="${(purchaseOrder.vendorId != null and vendor.vendorId == purchaseOrder.vendorId) or (preSelectedVendorId != null and vendor.vendorId == preSelectedVendorId)}"
+                                        th:data-paypal="${vendor.transactionAccount}"
+                                        th:text="${vendor.vendorName + (vendor.transactionAccount != null and !vendor.transactionAccount.isEmpty() ? ' [PayPal: ' + vendor.transactionAccount + ']' : '')}">
+                                </option>
+                            </select>
+                            <input th:if="${purchaseOrder.orderId != null}" type="hidden" name="vendorId" th:value="${purchaseOrder.vendorId}" />
+                            
+                            <!-- PayPal Account Badge -->
+                            <div id="vendorPaypalContainer" class="mt-2" style="display: none;">
+                                <small class="text-muted font-weight-bold">Transaction Account (PayPal): </small>
+                                <span id="vendorPaypalBadge" class="badge badge-info" style="font-size: 0.85rem; padding: 5px 10px;"></span>
+                            </div>
+                        </div>
+
+                        <!-- View Pending Booking Request Button -->
+                        <div class="col-md-4 mb-3">
+                            <button type="button" class="btn text-white font-weight-bold w-100" style="background: #3b82f6; border: none; height: 38px; border-radius: 6px; box-shadow: 0 2px 4px rgba(59,130,246,0.25);"
+                                    data-toggle="modal" data-target="#pendingBookingModal" id="viewPendingBookingBtn">
+                                <i class="typcn typcn-clipboard"></i> View Pending Booking Request
+                            </button>
+                        </div>
+
+                    </div>
+
+                    <hr>
+
+                    <div id="vendorDetailsCard" th:style="${(purchaseOrder.orderId != null or preSelectedVendorId != null) ? 'display: block; margin-bottom: 25px;' : 'display: none; margin-bottom: 25px;'}">
+                        
+                        <!-- Mapped Item Selector Section -->
+                        <div class="row align-items-end mb-4" th:if="${purchaseOrder.orderId == null}">
+                            <div class="col-md-9 form-group mb-0">
+                                <label for="itemSelector" style="font-weight: 600;">Mapped Items List <span class="text-danger">*</span></label>
+                                <select class="form-control" id="itemSelector">
+                                    <option value="">-- Choose Item --</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 form-group mb-0">
+                                <button type="button" class="btn text-white font-weight-bold w-100" id="addItemBtn" style="height: 43px; background: #3b82f6; border: none; border-radius: 6px; box-shadow: 0 2px 4px rgba(59,130,246,0.25);">
+                                    <i class="typcn typcn-plus"></i> Add Item
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Selected Items Table -->
+                        <div id="itemsContainer" style="margin-top: 25px;">
+                            <h6 class="mb-3" style="font-weight: 600;">
+                                Selected Items List
+                            </h6>
+                            
+                            <div class="table-responsive">
+                                <table class="table table-hover table-bordered mb-0" id="itemsTable" style="font-size: 13.5px; border: 1px solid #e2e8f0;">
+                                     <thead style="background: #f8fafc; color: #475569; border-bottom: 2px solid #cbd5e1;">
+                                         <tr>
+                                             <th style="font-weight: 700; color: #334155;">Item Name</th>
+                                             <th style="font-weight: 700; color: #334155;">Rate</th>
+                                             <th style="width: 160px; font-weight: 700; color: #334155;">Ordered Qty</th>
+                                             <!-- Edit mode extra columns -->
+                                             <th th:if="${purchaseOrder.orderId != null}" style="width: 150px; font-weight: 700; color: #334155;">Already Received</th>
+                                             <th th:if="${purchaseOrder.orderId != null}" style="width: 150px; font-weight: 700; color: #334155;">Received Qty</th>
+                                             <th th:if="${purchaseOrder.orderId != null}" style="width: 100px; font-weight: 700; color: #334155;">Pending</th>
+                                             <th style="font-weight: 700; color: #334155;">Cost (₹)</th>
+                                             <th th:if="${purchaseOrder.orderId != null}" style="width: 160px; text-align:center; font-weight: 700; color: #334155;">Status</th>
+                                             <th th:if="${purchaseOrder.orderId == null}" style="width: 100px; text-align: center; font-weight: 700; color: #334155;">Action</th>
+                                         </tr>
+                                     </thead>
+                                    <tbody id="itemsTableBody">
+                                        <tr th:if="${purchaseOrder.orderId == null}" class="no-items-row">
+                                            <td colspan="5" class="text-center">No items added yet. Choose an item from the list above and click "Add Item".</td>
+                                        </tr>
+
+                                        <!-- EDIT MODE: pre-rendered rows with receive qty + status -->
+                                        <tr th:if="${purchaseOrder.orderId != null}"
+                                            th:each="detail : ${purchaseOrder.details}"
+                                            th:data-item-id="${detail.itemId}"
+                                            th:data-rate="${detail.rate}"
+                                            th:data-ordered-qty="${detail.quantity}"
+                                            th:data-already-received="${detail.receivedQuantity != null ? detail.receivedQuantity : 0}">
+
+                                            <!-- Item Name + hidden fields -->
+                                            <td>
+                                                <span th:text="${detail.item != null ? detail.item.itemName : 'Unknown'}"></span>
+                                                <input type="hidden" name="selectedItems" th:value="${detail.itemId}" />
+                                                <input type="hidden" th:name="'rate_' + ${detail.itemId}" th:value="${detail.rate}" />
+                                            </td>
+
+                                            <!-- Rate -->
+                                            <td th:text="'₹' + ${#numbers.formatDecimal(detail.rate, 1, 2)}"></td>
+
+                                            <!-- Ordered Qty (read-only in edit) -->
+                                            <td>
+                                                <input type="number"
+                                                       th:name="'quantity_' + ${detail.itemId}"
+                                                       class="form-control item-qty"
+                                                       th:value="${detail.quantity}"
+                                                       min="1" required readonly
+                                                       style="background:#f8f9fa;" />
+                                            </td>
+
+                                            <!-- Already Received (read-only in edit) -->
+                                            <td>
+                                                <span class="already-received-qty"
+                                                      th:text="${detail.receivedQuantity != null ? detail.receivedQuantity : 0}"
+                                                      style="font-weight:600; color: #475569;"></span>
+                                            </td>
+
+                                            <!-- Received Qty input -->
+                                            <td>
+                                                <input type="number"
+                                                       th:name="'receivedQty_' + ${detail.itemId}"
+                                                       class="form-control received-qty"
+                                                       value="0"
+                                                       min="0"
+                                                       th:max="${detail.quantity - (detail.receivedQuantity != null ? detail.receivedQuantity : 0)}"
+                                                       th:readonly="${(detail.receivedQuantity != null ? detail.receivedQuantity : 0) >= detail.quantity}"
+                                                       th:style="${(detail.receivedQuantity != null ? detail.receivedQuantity : 0) >= detail.quantity ? 'background:#e9ecef; cursor:not-allowed;' : ''}"
+                                                       oninput="updateRowStatus(this.closest('tr'))"
+                                                       onchange="updateRowStatus(this.closest('tr'))"
+                                                       onkeyup="updateRowStatus(this.closest('tr'))" />
+                                            </td>
+
+                                            <!-- Pending qty -->
+                                            <td>
+                                                <span class="pending-qty text-success fw-bold"
+                                                      th:text="${detail.quantity - (detail.receivedQuantity != null ? detail.receivedQuantity : 0)}"
+                                                      style="font-weight:600;"></span>
+                                            </td>
+
+                                            <!-- Total Cost -->
+                                            <td>
+                                                <span class="item-total-cost"
+                                                      th:text="'₹' + ${#numbers.formatDecimal(detail.totalCost, 1, 2)}"></span>
+                                            </td>
+
+                                            <!-- Status Badge -->
+                                            <td class="status-cell" style="text-align:center;">
+                                                <span class="status-badge badge"
+                                                      th:style="${detail.status == 3 ? 'background-color:#28a745;color:white;padding:5px 10px;border-radius:12px;font-size:12px;' : (detail.status == 2 ? 'background-color:#fd7e14;color:white;padding:5px 10px;border-radius:12px;font-size:12px;' : 'background-color:#dc3545;color:white;padding:5px 10px;border-radius:12px;font-size:12px;')}"
+                                                      th:text="${detail.status == 3 ? 'Fully Received' : (detail.status == 2 ? 'Partially Received' : 'create')}">
+                                                </span>
+                                                <!-- hidden field to submit updated received qty -->
+                                                <input type="hidden"
+                                                       th:name="'detailStatus_' + ${detail.itemId}"
+                                                       th:value="${detail.status != null ? detail.status : 1}"
+                                                       class="status-hidden" />
+                                            </td>
+                                        </tr>
+
+                                    </tbody>
+                                     <tfoot style="background: #f8fafc; font-weight: bold;">
+                                         <tr>
+                                             <td th:colspan="${purchaseOrder.orderId != null ? 6 : 3}" class="text-right" style="text-align: right; padding-right: 16px; font-weight: 700; color: #334155;">Grand Total:</td>
+                                             <td id="grandTotalCost" style="font-weight: 700; color: #0f172a;" th:text="${purchaseOrder.totalCost != null} ? '₹' + ${#numbers.formatDecimal(purchaseOrder.totalCost, 1, 2)} : '₹0.00'">₹0.00</td>
+                                             <td></td>
+                                         </tr>
+                                     </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center pt-2">
+                        <button type="submit" class="btn text-white font-weight-bold mr-2" style="background: #10b981; border: none; padding: 9px 20px; border-radius: 6px; box-shadow: 0 2px 4px rgba(16,185,129,0.25);" th:if="${purchaseOrder.status != 3}">
+                            <i class="typcn typcn-tick"></i> Save
+                        </button>
+
+                        <a th:href="@{/purchaseorders}" class="btn text-white font-weight-bold mr-2" style="background: #64748b; border: none; padding: 9px 20px; border-radius: 6px;">
+                            <i class="typcn typcn-arrow-left"></i> Back to List
+                        </a>
+
+                        <button type="button" class="btn font-weight-bold" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 9px 20px; border-radius: 6px;" id="resetBtn" th:if="${purchaseOrder.status != 3}">
+                            Reset
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    <!-- Modal for Pending Booking Requests Summary -->
+    <div class="modal fade" id="pendingBookingModal" tabindex="-1" role="dialog" aria-labelledby="pendingBookingModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content" style="border-radius: 10px; overflow: hidden; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
+                <div class="modal-header text-white" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 16px 24px;">
+                    <div class="d-flex align-items-center">
+                        <i class="typcn typcn-clipboard mr-2" style="font-size: 1.4rem; vertical-align: middle;"></i>
+                        <h5 class="modal-title font-weight-bold text-white mb-0" id="pendingBookingModalLabel" style="letter-spacing: 0.3px;">Pending Booking Requests Summary</h5>
+                    </div>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" style="opacity: 0.9;">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body text-left p-4">
+                    <!-- Dropdown Filter -->
+                    <div class="form-group mb-4">
+                        <label for="itemFilterDropdown" class="font-weight-bold" style="color: #475569;">Filter by Item:</label>
+                        <select class="form-control" id="itemFilterDropdown" style="border-radius: 6px; border: 1px solid #cbd5e1;">
+                            <option value="all">All Items</option>
+                        </select>
+                    </div>
+
+                    <!-- Items Summary Table -->
+                    <div class="table-responsive">
+                        <table class="table table-hover table-bordered mb-0" id="pendingBookingTable" style="font-size: 13.5px; border: 1px solid #e2e8f0;">
+                            <thead style="background: #f8fafc; color: #475569; border-bottom: 2px solid #cbd5e1;">
+                                <tr>
+                                    <th style="font-weight: 700; color: #334155;">Item Code</th>
+                                    <th style="font-weight: 700; color: #334155;">Item Name</th>
+                                    <th class="text-center" style="font-weight: 700; color: #334155; width: 150px;">Booking Request</th>
+                                    <th class="text-center" style="font-weight: 700; color: #334155; width: 130px;">Current Stock</th>
+                                    <th class="text-center" style="font-weight: 700; color: #334155; width: 130px;">Purchase Order</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pendingBookingTableBody">
+                                <!-- Dynamic rows go here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer" style="background: #f8fafc; border-top: 1px solid #cbd5e1;">
+                    <button type="button" class="btn text-white font-weight-bold" style="background: #64748b; border: none; padding: 7px 20px; border-radius: 6px;" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        // Global function for live row status & pending qty updates
+        function updateRowStatus(tr) {
+            if (!tr) return;
+            const receivedInput = tr.querySelector(".received-qty");
+            const pendingSpan   = tr.querySelector(".pending-qty");
+            const statusCell    = tr.querySelector(".status-cell") || tr.querySelector("td:last-child");
+            if (!receivedInput) return;
+
+            let statusBadge = statusCell ? statusCell.querySelector(".status-badge") : null;
+            if (statusCell && !statusBadge) {
+                statusBadge = document.createElement("span");
+                statusBadge.className = "status-badge badge";
+                statusCell.insertAdjacentElement("afterbegin", statusBadge);
+            }
+
+            const statusHidden = tr.querySelector(".status-hidden");
+            const orderedInput = tr.querySelector(".item-qty");
+
+            const orderedQty = parseInt(orderedInput ? orderedInput.value : tr.getAttribute("data-ordered-qty")) || 0;
+            const alreadyReceivedQty = parseInt(tr.getAttribute("data-already-received")) || 0;
+            const maxAllowed = Math.max(0, orderedQty - alreadyReceivedQty);
+            let newlyReceivedQty = parseInt(receivedInput.value) || 0;
+
+            // Validate & clamp newly received quantity to [0, maxAllowed]
+            if (newlyReceivedQty < 0) { 
+                newlyReceivedQty = 0; 
+                receivedInput.value = 0; 
+            }
+            if (newlyReceivedQty > maxAllowed) { 
+                alert("Received Quantity cannot exceed pending Ordered Quantity.");
+                newlyReceivedQty = maxAllowed; 
+                receivedInput.value = maxAllowed; 
+            }
+
+            const totalReceivedQty = alreadyReceivedQty + newlyReceivedQty;
+
+            // Update pending quantity text live
+            const pending = Math.max(0, orderedQty - totalReceivedQty);
+            if (pendingSpan) {
+                pendingSpan.textContent = pending;
+            }
+
+            // Keep Total Cost based on Ordered Quantity (do not change based on received qty)
+            const rate = parseFloat(tr.getAttribute("data-rate")) || 0;
+            const totalCostSpan = tr.querySelector(".item-total-cost");
+            if (totalCostSpan) {
+                totalCostSpan.textContent = '\u20B9' + (rate * orderedQty).toFixed(2);
+            }
+
+            // Update grand total based on total ordered cost
+            const grandTotalEl = document.getElementById("grandTotalCost");
+            if (grandTotalEl) {
+                let grandTotal = 0;
+                document.querySelectorAll("#itemsTableBody tr:not(.no-items-row)").forEach(function(row) {
+                    const rowRate = parseFloat(row.getAttribute("data-rate")) || 0;
+                    const rowQtyInput = row.querySelector(".item-qty");
+                    const rowQty = rowQtyInput ? (parseFloat(rowQtyInput.value) || 0) : (parseFloat(row.getAttribute("data-ordered-qty")) || 0);
+                    grandTotal += rowRate * rowQty;
+                });
+                grandTotalEl.textContent = '\u20B9' + grandTotal.toFixed(2);
+            }
+
+            // Update status badge & text live
+            let newStatus;
+            if (totalReceivedQty === 0) {
+                newStatus = 1; // create
+                if (statusBadge) {
+                    statusBadge.style.backgroundColor = "#dc3545"; // Red
+                    statusBadge.style.color = "white";
+                    statusBadge.style.padding = "5px 10px";
+                    statusBadge.style.borderRadius = "12px";
+                    statusBadge.style.fontSize = "12px";
+                    statusBadge.textContent = "create";
+                }
+            } else if (totalReceivedQty < orderedQty) {
+                newStatus = 2; // Partially Received
+                if (statusBadge) {
+                    statusBadge.style.backgroundColor = "#fd7e14"; // Orange
+                    statusBadge.style.color = "white";
+                    statusBadge.style.padding = "5px 10px";
+                    statusBadge.style.borderRadius = "12px";
+                    statusBadge.style.fontSize = "12px";
+                    statusBadge.textContent = "Partially Received";
+                }
+            } else {
+                newStatus = 3; // Fully Received
+                if (statusBadge) {
+                    statusBadge.style.backgroundColor = "#28a745"; // Green
+                    statusBadge.style.color = "white";
+                    statusBadge.style.padding = "5px 10px";
+                    statusBadge.style.borderRadius = "12px";
+                    statusBadge.style.fontSize = "12px";
+                    statusBadge.textContent = "Fully Received";
+                }
+            }
+
+            if (statusHidden) statusHidden.value = newStatus;
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const vendorSelect = document.getElementById("vendor");
+            const detailsCard = document.getElementById("vendorDetailsCard");
+            const itemSelector = document.getElementById("itemSelector");
+            const addItemBtn = document.getElementById("addItemBtn");
+            const itemsTableBody = document.getElementById("itemsTableBody");
+            const grandTotalCost = document.getElementById("grandTotalCost");
+
+            // Function to update the grand total of the purchase order (Total Cost)
+            function updateGrandTotal() {
+                let total = 0;
+                const rows = itemsTableBody.querySelectorAll("tr:not(.no-items-row)");
+                rows.forEach(row => {
+                    const rate = parseFloat(row.getAttribute("data-rate")) || 0;
+                    const qtyInput = row.querySelector(".item-qty");
+                    const qty = qtyInput ? (parseFloat(qtyInput.value) || 0) : (parseFloat(row.getAttribute("data-ordered-qty")) || 0);
+                    total += rate * qty;
+                });
+                grandTotalCost.textContent = '\u20B9' + total.toFixed(2);
+            }
+
+            // Utility to render options in the mapped item selector
+            function populateItemSelector(itemsList) {
+                itemSelector.innerHTML = '<option value="">-- Choose Item --</option>';
+
+                if (!itemsList || itemsList.length === 0) {
+                    return;
+                }
+
+                const seenItemIds = new Set();
+
+                itemsList.forEach(mapping => {
+                    let itemId = mapping.itemId;
+                    if (itemId === undefined || itemId === null || itemId === '') return;
+
+                    const strId = String(itemId);
+                    if (seenItemIds.has(strId)) {
+                        return; // Skip duplicate item
+                    }
+                    seenItemIds.add(strId);
+
+                    let rateVal = mapping.rate || 0.0;
+                    let typeNameVal = mapping.typeName || 'N/A';
+                    let itemCode = mapping.itemCode || 'N/A';
+                    let itemName = mapping.itemName || 'N/A';
+
+                    let option = document.createElement("option");
+                    option.value = itemId;
+                    option.textContent = itemName + ' (Code: ' + itemCode + ') - Rate: ₹' + rateVal.toFixed(2);
+                    option.setAttribute("data-code", itemCode);
+                    option.setAttribute("data-name", itemName);
+                    option.setAttribute("data-type", typeNameVal);
+                    option.setAttribute("data-rate", rateVal);
+                    itemSelector.appendChild(option);
+                });
+            }
+
+            const vendorPaypalContainer = document.getElementById("vendorPaypalContainer");
+            const vendorPaypalBadge = document.getElementById("vendorPaypalBadge");
+
+            function updateVendorPaypalDisplay() {
+                if (!vendorSelect || !vendorPaypalContainer) return;
+                const sel = vendorSelect.options[vendorSelect.selectedIndex];
+                const paypal = sel ? (sel.getAttribute("data-paypal") || "") : "";
+                if (paypal && paypal.trim() !== "") {
+                    vendorPaypalBadge.textContent = paypal;
+                    vendorPaypalContainer.style.display = "block";
+                } else {
+                    vendorPaypalContainer.style.display = "none";
+                }
+            }
+
+            // Vendor dropdown change listener
+            vendorSelect.addEventListener("change", function () {
+                let vendorId = this.value;
+                updateVendorPaypalDisplay();
+
+                if (vendorId == "") {
+                    detailsCard.style.display = "none";
+                    itemSelector.innerHTML = '<option value="">-- Choose Item --</option>';
+                    itemsTableBody.innerHTML = `
+                        <tr class="no-items-row">
+                            <td colspan="5" class="text-center">No items added yet. Choose an item from the list above and click "Add Item".</td>
+                        </tr>
+                    `;
+                    updateGrandTotal();
+                    return;
+                }
+
+                // Fetch mappings directly using vendorId
+                fetch("/purchaseorders/vendor/" + vendorId + "/mappings")
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error("Failed to fetch mappings");
+                        }
+                        return response.json();
+                    })
+                    .then(mappings => {
+                        populateItemSelector(mappings);
+                        detailsCard.style.display = "block";
+                    })
+                    .catch(err => {
+                        console.error("Error loading vendor details and mappings:", err);
+                        detailsCard.style.display = "none";
+                    });
+            });
+
+            // Trigger pop-up immediately if an already selected item is chosen in the dropdown
+            itemSelector.addEventListener("change", function () {
+                const itemId = this.value;
+                if (!itemId) return;
+                const existingRow = itemsTableBody.querySelector('tr[data-item-id="' + itemId + '"]');
+                if (existingRow) {
+                    alert("Item is already selected");
+                    this.selectedIndex = 0;
+                }
+            });
+
+            // Add selected item to the table
+            addItemBtn.addEventListener("click", function () {
+                const selectedVal = itemSelector.value;
+                if (!selectedVal) {
+                    alert("Please select an item from the list first!");
+                    return;
+                }
+
+                const selectedOption = itemSelector.options[itemSelector.selectedIndex];
+                if (!selectedOption) return;
+
+                const itemId = selectedOption.value;
+                const itemName = selectedOption.getAttribute("data-name") || selectedOption.textContent;
+                const itemCode = selectedOption.getAttribute("data-code") || "";
+                const rateVal = parseFloat(selectedOption.getAttribute("data-rate") || 0.0);
+
+                // Check if item is already added to the table
+                const existingRow = document.querySelector('tr[data-item-id="' + itemId + '"]');
+                if (existingRow) {
+                    alert("Item is already selected");
+                    return;
+                }
+
+                // Remove the "No items added yet" placeholder row if present
+                const placeholder = itemsTableBody.querySelector(".no-items-row");
+                if (placeholder) {
+                    placeholder.remove();
+                }
+
+                // Create and append the new item row
+                let tr = document.createElement("tr");
+                tr.setAttribute("data-item-id", itemId);
+                tr.setAttribute("data-rate", rateVal);
+                
+                const initialTotal = rateVal.toFixed(2);
+                const codeSubHtml = (itemCode && itemCode !== 'N/A') ? `<small class="text-muted d-block">Code: ${itemCode}</small>` : '';
+
+                tr.innerHTML = `
+                    <td>
+                        <span class="font-weight-bold" style="color: #0f172a;">${itemName}</span>
+                        ${codeSubHtml}
+                        <input type="hidden" name="selectedItems" value="${itemId}" />
+                        <input type="hidden" name="rate_${itemId}" value="${rateVal}" />
+                    </td>
+                    <td style="font-weight: 600;">₹${rateVal.toFixed(2)}</td>
+                    <td>
+                        <input type="number" name="quantity_${itemId}" class="form-control item-qty" value="1" min="1" required />
+                    </td>
+                    <td class="font-weight-bold" style="color: #0f172a;">
+                        <span class="item-total-cost">₹${initialTotal}</span>
+                    </td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-sm btn-outline-danger remove-item-btn" style="border-radius: 4px;" title="Remove Item">
+                            <i class="typcn typcn-trash"></i>
+                        </button>
+                    </td>
+                `;
+
+                // Add quantity input listener to update total cost dynamically
+                const qtyInput = tr.querySelector('.item-qty');
+                const totalCostSpan = tr.querySelector('.item-total-cost');
+                qtyInput.addEventListener('input', function () {
+                    const currentQty = parseFloat(qtyInput.value) || 0;
+                    totalCostSpan.textContent = '₹' + (rateVal * currentQty).toFixed(2);
+                    updateGrandTotal();
+                });
+
+                // Add delete listener to the remove button
+                tr.querySelector(".remove-item-btn").addEventListener("click", function () {
+                    tr.remove();
+                    if (itemsTableBody.querySelectorAll("tr").length === 0) {
+                        itemsTableBody.innerHTML = `
+                            <tr class="no-items-row">
+                                <td colspan="5" class="text-center">No items added yet. Choose an item from the list above and click "Add Item".</td>
+                            </tr>
+                        `;
+                    }
+                    updateGrandTotal();
+                });
+
+                itemsTableBody.appendChild(tr);
+                itemSelector.selectedIndex = 0; // Reset item dropdown selection
+                updateGrandTotal();
+            });
+
+            // Reset button click listener
+            const resetBtn = document.getElementById("resetBtn");
+            if (resetBtn) {
+                resetBtn.addEventListener("click", function () {
+                    document.getElementById("purchaseOrderForm").reset();
+                    vendorSelect.value = "";
+                    vendorSelect.dispatchEvent(new Event("change"));
+                });
+            }
+
+            // Bind listeners for pre-rendered rows (in edit mode)
+            function bindPreRenderedRowListeners() {
+                const rows = itemsTableBody.querySelectorAll("tr:not(.no-items-row)");
+                rows.forEach(tr => {
+                    const qtyInput = tr.querySelector('.item-qty');
+                    const totalCostSpan = tr.querySelector('.item-total-cost');
+                    const rateVal = parseFloat(tr.getAttribute("data-rate")) || 0;
+
+                    if (qtyInput) {
+                        qtyInput.addEventListener('input', function () {
+                            const currentQty = parseFloat(qtyInput.value) || 0;
+                            if (totalCostSpan) {
+                                totalCostSpan.textContent = '₹' + (rateVal * currentQty).toFixed(2);
+                            }
+                            updateGrandTotal();
+                        });
+                    }
+
+                    const removeBtn = tr.querySelector(".remove-item-btn");
+                    if (removeBtn) {
+                        removeBtn.addEventListener("click", function () {
+                            tr.remove();
+                            if (itemsTableBody.querySelectorAll("tr").length === 0) {
+                                itemsTableBody.innerHTML = `
+                                    <tr class="no-items-row">
+                                        <td colspan="5" class="text-center">No items added yet. Choose an item from the list above and click "Add Item".</td>
+                                    </tr>
+                                `;
+                            }
+                            updateGrandTotal();
+                            updateDropdownOptionsState();
+                        });
+                    }
+                });
+            }
+
+            bindPreRenderedRowListeners();
+
+            // --- EDIT MODE: Live status badge + pending qty update ---
+
+            function bindEditModeListeners() {
+                const rows = itemsTableBody.querySelectorAll("tr");
+                rows.forEach(tr => {
+                    updateRowStatus(tr);
+                });
+
+                // Global document delegation for live feedback on any user interaction
+                ["input", "change", "keyup", "blur"].forEach(evtType => {
+                    document.addEventListener(evtType, function (e) {
+                        if (e.target && e.target.classList.contains("received-qty")) {
+                            const tr = e.target.closest("tr");
+                            if (tr) updateRowStatus(tr);
+                        }
+                    });
+                });
+            }
+
+            bindEditModeListeners();
+
+            // Handle bookingNo pre-selected vendor & items
+            /*[# th:if="${preSelectedVendorId != null}"]*/
+            const targetVendorId = /*[[${preSelectedVendorId}]]*/ null;
+            if (vendorSelect && targetVendorId) {
+                vendorSelect.value = String(targetVendorId);
+                updateVendorPaypalDisplay();
+                if (detailsCard) detailsCard.style.display = "block";
+
+                fetch("/purchaseorders/vendor/" + targetVendorId + "/mappings")
+                    .then(response => response.ok ? response.json() : [])
+                    .then(mappings => {
+                        populateItemSelector(mappings);
+                        const preItemsArr = /*[[${preSelectedItems}]]*/ [];
+                        if (preItemsArr && preItemsArr.length > 0 && itemSelector) {
+                            itemSelector.value = preItemsArr[0].itemId;
+                        }
+                    })
+                    .catch(err => console.error("Error loading vendor mappings:", err));
+            }
+            /*[/]*/
+
+            /*[# th:if="${preSelectedItems != null and not #lists.isEmpty(preSelectedItems)}"]*/
+            const preItems = /*[[${preSelectedItems}]]*/ [];
+            if (preItems && preItems.length > 0 && itemsTableBody) {
+                itemsTableBody.innerHTML = "";
+                preItems.forEach(item => {
+                    const tr = document.createElement("tr");
+                    tr.setAttribute("data-item-id", item.itemId);
+                    tr.setAttribute("data-rate", item.rate || 0);
+
+                    const rateVal = parseFloat(item.rate || 0);
+                    const qtyVal = parseInt(item.quantity || 1);
+                    const totalCostVal = parseFloat(item.totalCost || (rateVal * qtyVal));
+
+                    tr.innerHTML = `
+                        <td>
+                            <span class="font-weight-bold" style="color: #0f172a;">${item.itemName}</span>
+                            <small class="text-muted d-block">Code: ${item.itemCode || 'N/A'}</small>
+                            <input type="hidden" name="selectedItems" value="${item.itemId}" />
+                            <input type="hidden" name="rate_${item.itemId}" value="${rateVal}" />
+                        </td>
+                        <td style="font-weight: 600;">₹${rateVal.toFixed(2)}</td>
+                        <td>
+                            <input type="number"
+                                   name="quantity_${item.itemId}"
+                                   class="form-control item-qty"
+                                   value="${qtyVal}"
+                                   min="1" required />
+                        </td>
+                        <td class="font-weight-bold" style="color: #0f172a;">
+                            <span class="item-total-cost">₹${totalCostVal.toFixed(2)}</span>
+                        </td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-sm btn-outline-danger remove-item-btn" style="border-radius: 4px;">
+                                <i class="typcn typcn-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    itemsTableBody.appendChild(tr);
+                });
+                bindPreRenderedRowListeners();
+                updateGrandTotal();
+            }
+            /*[/]*/
+
+            // Populate mapping dropdown if vendor is already pre-selected (normal edit mode or fallback)
+            if (vendorSelect) {
+                if (vendorSelect.value === "" && vendorSelect.options.length > 1) {
+                    vendorSelect.selectedIndex = 1;
+                }
+                if (vendorSelect.value !== "") {
+                    updateVendorPaypalDisplay();
+                    if (detailsCard) detailsCard.style.display = "block";
+                    let vendorId = vendorSelect.value;
+
+                    fetch("/purchaseorders/vendor/" + vendorId + "/mappings")
+                        .then(response => response.ok ? response.json() : [])
+                        .then(mappings => {
+                            populateItemSelector(mappings);
+                        })
+                        .catch(err => {
+                            console.error("Error loading pre-selected vendor mappings:", err);
+                        });
+                }
+            }
+
+            // View pending booking request button listener
+            const viewPendingBtn = document.getElementById("viewPendingBookingBtn");
+            if (viewPendingBtn) {
+                viewPendingBtn.addEventListener("click", loadPendingBookingSummary);
+            }
+
+            // Dropdown filter change listener
+            const filterDropdown = document.getElementById("itemFilterDropdown");
+            if (filterDropdown) {
+                filterDropdown.addEventListener("change", function () {
+                    renderPendingBookingTable(this.value);
+                });
+            }
+
+            // Prevent form submit if no items are in the table
+            document.getElementById("purchaseOrderForm").addEventListener("submit", function (e) {
+                const rows = itemsTableBody.querySelectorAll("tr:not(.no-items-row)");
+                if (rows.length === 0) {
+                    e.preventDefault();
+                    alert("Please add at least one item to save the purchase order!");
+                }
+            });
+        });
+
+        let pendingBookingData = [];
+
+        function loadPendingBookingSummary() {
+            fetch("/purchaseorders/pending-booking-summary")
+                .then(response => response.json())
+                .then(data => {
+                    pendingBookingData = data;
+                    
+                    // Populate dropdown
+                    const dropdown = document.getElementById("itemFilterDropdown");
+                    dropdown.innerHTML = '<option value="all">All Items</option>';
+                    
+                    data.forEach(item => {
+                        const opt = document.createElement("option");
+                        opt.value = item.itemId;
+                        opt.textContent = item.itemName + " (Code: " + item.itemCode + ")";
+                        dropdown.appendChild(opt);
+                    });
+
+                    renderPendingBookingTable("all");
+                })
+                .catch(err => {
+                    console.error("Error loading pending booking summary:", err);
+                    alert("An error occurred while loading the booking summary.");
+                });
+        }
+
+        function renderPendingBookingTable(filterValue) {
+            const tbody = document.getElementById("pendingBookingTableBody");
+            tbody.innerHTML = "";
+
+            let filtered = pendingBookingData;
+            if (filterValue !== "all") {
+                filtered = pendingBookingData.filter(item => String(item.itemId) === String(filterValue));
+            }
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No items found.</td></tr>';
+                return;
+            }
+
+            filtered.forEach(item => {
+                const tr = document.createElement("tr");
+
+                // Item Code cell
+                const tdCode = document.createElement("td");
+                tdCode.textContent = item.itemCode || "N/A";
+                tr.appendChild(tdCode);
+
+                // Item Name cell
+                const tdName = document.createElement("td");
+                tdName.style.fontWeight = "700";
+                tdName.style.color = "#0f172a";
+                tdName.textContent = item.itemName || "N/A";
+                tr.appendChild(tdName);
+
+                // Booking Request cell
+                const tdBooking = document.createElement("td");
+                tdBooking.className = "text-center font-weight-bold";
+                if (item.bookingRequest > 0) {
+                    tdBooking.innerHTML = '<span class="badge" style="background-color: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 6px;">' + item.bookingRequest + '</span>';
+                } else {
+                    tdBooking.textContent = "0";
+                    tdBooking.style.color = "#64748b";
+                }
+                tr.appendChild(tdBooking);
+
+                // Current Stock cell
+                const tdStock = document.createElement("td");
+                tdStock.className = "text-center font-weight-bold";
+                if (item.currentStock > 0) {
+                    tdStock.innerHTML = '<span class="badge" style="background-color: #dcfce7; color: #166534; border: 1px solid #86efac; font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 6px;">' + item.currentStock + '</span>';
+                } else {
+                    tdStock.innerHTML = '<span class="badge" style="background-color: #fef3c7; color: #92400e; border: 1px solid #fcd34d; font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 6px;">0</span>';
+                }
+                tr.appendChild(tdStock);
+
+                // Purchase Order cell
+                const tdPO = document.createElement("td");
+                tdPO.className = "text-center font-weight-bold";
+                if (item.purchaseOrder > 0) {
+                    tdPO.innerHTML = '<span class="badge" style="background-color: #e0f2fe; color: #075985; border: 1px solid #7dd3fc; font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 6px;">' + item.purchaseOrder + '</span>';
+                } else {
+                    tdPO.textContent = "0";
+                    tdPO.style.color = "#64748b";
+                }
+                tr.appendChild(tdPO);
+
+                tbody.appendChild(tr);
+            });
+        }
+    </script>
+
+</div>
+
+</html>

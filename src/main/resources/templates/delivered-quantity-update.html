@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+
+<div layout:fragment="content">
+    <div class="col-lg-12 grid-margin stretch-card">
+        <div class="card" style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+            <!-- Card Header -->
+            <div class="card-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 18px 24px;">
+                <h4 class="mb-0 text-white font-weight-bold" style="letter-spacing: 0.4px; display: flex; align-items: center;">
+                    <i class="typcn typcn-edit mr-2" style="font-size: 1.5rem; color: #6366f1;"></i>
+                    <span th:text="'Update Delivered Quantity - ' + ${so.bookingNo != null ? so.bookingNo : ('CO-' + so.orderId)}">Update Delivered Quantity</span>
+                </h4>
+                <a th:href="@{/delivered-sales}" class="btn btn-sm font-weight-bold text-white" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); padding: 6px 16px; border-radius: 6px;">
+                    <i class="typcn typcn-arrow-left mr-1"></i> Back to List
+                </a>
+            </div>
+
+            <div class="card-body p-4">
+                <form th:action="@{/delivered-sales/update}" method="post">
+                    <input type="hidden" name="bookingNo" th:value="${so.bookingNo}" />
+                    <input type="hidden" name="orderId" th:value="${so.orderId}" />
+
+                    <!-- Top Metadata Bar -->
+                    <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 10px; padding: 20px 24px; font-size: 14.5px; color: #475569;" class="mb-4">
+                        <div class="row align-items-center">
+                            <div class="col-md-4 col-6 mb-2 mb-md-0">
+                                <span class="text-muted">Booking Number:</span>
+                                <h5 class="mb-0 font-weight-bold" style="color: #0f172a;" th:text="${so.bookingNo != null ? so.bookingNo : 'N/A'}">BR-00-0000</h5>
+                            </div>
+                            <div class="col-md-4 col-6 mb-2 mb-md-0">
+                                <span class="text-muted">Challan Order ID:</span>
+                                <h5 class="mb-0 font-weight-bold" style="color: #0f172a;" th:text="${so.salesOrderNo != null ? so.salesOrderNo : ('CO-' + so.orderId)}">CO-00000</h5>
+                            </div>
+                            <div class="col-md-4 col-12">
+                                <span class="text-muted">Supplier Name:</span>
+                                <h5 class="mb-0 font-weight-bold" style="color: #0f172a;" th:text="${so.supplierName != null ? so.supplierName : '—'}">Supplier</h5>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Items Form Table with exact specified column titles -->
+                    <h5 class="mb-3 font-weight-bold text-dark d-flex align-items-center">
+                        <i class="typcn typcn-th-list mr-2" style="color: #6366f1; font-size: 1.3rem;"></i> Update Item Quantities
+                    </h5>
+
+                    <!-- Validation Error Alert Container -->
+                    <div id="validationAlert" class="alert alert-danger font-weight-bold shadow-sm" style="display: none; border-radius: 8px; border-left: 5px solid #dc2626;">
+                        <i class="typcn typcn-warning mr-2" style="font-size: 1.2rem;"></i>
+                        <span id="validationAlertText">Invalid value</span>
+                    </div>
+
+                    <div class="table-responsive mb-4">
+                        <table class="table table-bordered table-striped mb-0" id="updateItemsTable" style="border: 1px solid #cbd5e1; font-size: 14px;">
+                            <thead style="background: #f1f5f9; color: #334155; font-weight: 700; border-bottom: 2px solid #cbd5e1;">
+                            <tr>
+                                <th style="white-space: nowrap;">Item Name</th>
+                                <th class="text-center" style="width: 140px; white-space: nowrap;">Booked Quantity</th>
+                                <th class="text-center" style="width: 140px; white-space: nowrap;">Quantity Sent</th>
+                                <th class="text-center" style="width: 140px; white-space: nowrap;">Delivered Quantity</th>
+                                <th class="text-center" style="width: 120px; white-space: nowrap;">Damaged</th>
+                                <th class="text-center" style="width: 120px; white-space: nowrap;">Returned</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="d, dStat : ${so.details}" class="item-row">
+                                <!-- Item Name -->
+                                <td style="font-weight: 700; color: #0f172a; vertical-align: middle;">
+                                    <span class="item-name-text" th:text="${d.item != null ? d.item.itemName : (itemMap.get(d.itemId.intValue()) != null ? itemMap.get(d.itemId.intValue()).itemName : ('Item #' + d.itemId))}">Item Name</span>
+                                    <input type="hidden" name="itemIds" th:value="${d.itemId}" />
+                                </td>
+
+                                <!-- Booked Quantity -->
+                                <td class="text-center font-weight-bold cell-booked" style="color: #0f172a; vertical-align: middle;" th:text="${d.quantity != null ? d.quantity : 0}">0</td>
+
+                                <!-- Quantity Sent (Uneditable - Taken from Sales Request Data) -->
+                                <td class="text-center font-weight-bold" style="color: #0f172a; vertical-align: middle;">
+                                    <span class="font-weight-bold" style="color: #0f172a; font-size: 1rem;" th:text="${d.deliveredQuantity != null ? d.deliveredQuantity : 0}">0</span>
+                                    <input type="hidden" name="sentQuantities" class="form-control text-center input-sent"
+                                           th:value="${d.deliveredQuantity != null ? d.deliveredQuantity : 0}"
+                                           th:data-old-sent="${d.deliveredQuantity != null ? d.deliveredQuantity : 0}"
+                                           th:data-current-stock="${(stockMap != null && stockMap.get(d.itemId) != null) ? stockMap.get(d.itemId) : 0}" />
+                                </td>
+
+                                <!-- Delivered Quantity (Editable Input Field) -->
+                                <td class="text-center" style="vertical-align: middle;">
+                                    <input type="number" name="actualDeliveredQuantities" class="form-control text-center font-weight-bold text-success input-delivered" th:value="${(d.actualDeliveredQuantity != null and d.actualDeliveredQuantity > 0) ? d.actualDeliveredQuantity : (d.deliveredQuantity != null ? d.deliveredQuantity : 0)}" min="0" style="height: 38px; border-radius: 6px; width: 110px; margin: auto; border: 1px solid #cbd5e1;" />
+                                </td>
+
+                                <!-- Damaged -->
+                                <td class="text-center" style="vertical-align: middle;">
+                                    <input type="number" name="damagedQuantities" class="form-control text-center font-weight-bold text-danger input-damaged" th:value="${d.damagedQuantity != null ? d.damagedQuantity : 0}" min="0" style="height: 38px; border-radius: 6px; width: 100px; margin: auto; border: 1px solid #cbd5e1;" />
+                                </td>
+
+                                <!-- Returned -->
+                                <td class="text-center" style="vertical-align: middle;">
+                                    <input type="number" name="returnedQuantities" class="form-control text-center font-weight-bold text-warning input-returned" th:value="${d.returnedQuantity != null ? d.returnedQuantity : 0}" min="0" style="height: 38px; border-radius: 6px; width: 100px; margin: auto; border: 1px solid #cbd5e1;" />
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Footer Buttons -->
+                    <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                        <a th:href="@{/delivered-sales}" class="btn text-white font-weight-bold" style="background: #64748b; border: none; padding: 9px 24px; border-radius: 6px;">
+                            Cancel
+                        </a>
+                        <button type="submit" id="btnSubmit" class="btn text-white font-weight-bold" style="background: #10b981; border: none; padding: 9px 26px; border-radius: 6px; box-shadow: 0 2px 4px rgba(16,185,129,0.25);">
+                            <i class="typcn typcn-tick mr-1"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Live JS Validation: Stock limit check & Breakdown sum check -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const form = document.querySelector("form");
+            const alertBox = document.getElementById("validationAlert");
+            const alertText = document.getElementById("validationAlertText");
+            const rows = document.querySelectorAll(".item-row");
+
+            function validateRow(row, triggerPopup = false) {
+                const sentInput = row.querySelector(".input-sent");
+                const delivInput = row.querySelector(".input-delivered");
+                const dmgInput = row.querySelector(".input-damaged");
+                const retInput = row.querySelector(".input-returned");
+                const bookedCell = row.querySelector(".cell-booked");
+
+                const sent = parseInt(sentInput.value) || 0;
+                const booked = parseInt(bookedCell ? bookedCell.textContent : 0) || 0;
+                const oldSent = parseInt(sentInput.getAttribute("data-old-sent")) || 0;
+                const currentStock = parseFloat(sentInput.getAttribute("data-current-stock")) || 0;
+                const diffSent = sent - oldSent;
+
+                const deliv = parseInt(delivInput.value) || 0;
+                const dmg = parseInt(dmgInput.value) || 0;
+                const ret = parseInt(retInput.value) || 0;
+                const sum = deliv + dmg + ret;
+
+                const maxAllowed = Math.max(sent, booked);
+
+                if (sum > maxAllowed) {
+                    delivInput.style.borderColor = "#ef4444";
+                    dmgInput.style.borderColor = "#ef4444";
+                    retInput.style.borderColor = "#ef4444";
+                    row.style.backgroundColor = "#fff1f2";
+                    return { valid: false, errorType: "breakdown" };
+                } else {
+                    sentInput.style.borderColor = "#cbd5e1";
+                    delivInput.style.borderColor = "#cbd5e1";
+                    dmgInput.style.borderColor = "#cbd5e1";
+                    retInput.style.borderColor = "#cbd5e1";
+                    row.style.backgroundColor = "";
+                    return { valid: true };
+                }
+            }
+
+            function validateAll(showPopup = false) {
+                let isValid = true;
+                let errorMsg = "";
+
+                rows.forEach(function (row) {
+                    const result = validateRow(row, false);
+                    if (!result.valid) {
+                        isValid = false;
+                        if (result.errorType === "stock") {
+                            errorMsg = "amount not available";
+                        } else if (!errorMsg) {
+                            errorMsg = "Invalid value";
+                        }
+                    }
+                });
+
+                if (!isValid) {
+                    alertText.innerText = errorMsg;
+                    alertBox.style.display = "block";
+                    if (showPopup && errorMsg === "amount not available") {
+                        alert("amount not available");
+                    }
+                } else {
+                    alertBox.style.display = "none";
+                }
+                return isValid;
+            }
+
+            rows.forEach(function (row) {
+                const inputs = row.querySelectorAll("input");
+                inputs.forEach(function (input) {
+                    input.addEventListener("input", function () {
+                        if (input.classList.contains("input-sent")) {
+                            const result = validateRow(row, true);
+                            validateAll(false);
+                        } else {
+                            validateRow(row, false);
+                            validateAll(false);
+                        }
+                    });
+                });
+            });
+
+            form.addEventListener("submit", function (e) {
+                if (!validateAll(true)) {
+                    e.preventDefault();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            });
+        });
+    </script>
+</div>
+
+</html>

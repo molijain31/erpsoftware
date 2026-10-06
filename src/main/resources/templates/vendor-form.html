@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+
+<div layout:fragment="content">
+  <div class="row">
+    <div class="col-md-12 grid-margin stretch-card">
+      <div class="card" style="border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+        <div class="card-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 16px 24px;">
+          <h4 class="mb-0 text-white font-weight-bold" style="letter-spacing: 0.3px;">
+            <i class="typcn typcn-document-add mr-2" style="font-size: 1.3rem; vertical-align: middle;"></i>
+            Vendor Master Form
+          </h4>
+          <a th:href="@{/vendors}" class="btn btn-sm font-weight-bold" style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; padding: 6px 14px; border-radius: 6px;">
+            <i class="typcn typcn-arrow-left"></i> Back to List
+          </a>
+        </div>
+        <div class="card-body p-4">
+          <form class="forms-sample" th:action="@{/vendors/save}" th:object="${vendor}" method="post">
+
+            <input type="hidden" th:field="*{vendorId}">
+
+            <div class="row">
+              <!-- Left Column -->
+              <div class="col-md-6">
+                <!-- Vendor Name -->
+                <div class="form-group row align-items-center mb-2">
+                  <label for="vendorName" class="col-4 col-form-label font-weight-bold">Vendor Name <span class="text-danger">*</span></label>
+                  <div class="col-8">
+                    <input type="text" class="form-control form-control-sm" id="vendorName" th:field="*{vendorName}" placeholder="Enter Vendor Name" required="required" maxlength="100">
+                  </div>
+                </div>
+                
+                <!-- Contact Person 1 -->
+                <div class="form-group row align-items-center mb-2">
+                  <label for="contactPerson1" class="col-4 col-form-label font-weight-bold">Contact Person 1 <span class="text-danger">*</span></label>
+                  <div class="col-8">
+                    <input type="text" class="form-control form-control-sm" id="contactPerson1" th:field="*{contactPerson1}" placeholder="Enter Contact Person 1" required="required" maxlength="100">
+                  </div>
+                </div>
+
+                <!-- Contact Person 2 -->
+                <div class="form-group row align-items-center mb-2">
+                  <label for="contactPerson2" class="col-4 col-form-label font-weight-bold">Contact Person 2</label>
+                  <div class="col-8">
+                    <input type="text" class="form-control form-control-sm" id="contactPerson2" th:field="*{contactPerson2}" placeholder="Enter Contact Person 2" maxlength="100">
+                  </div>
+                </div>
+
+                <!-- Contact Person 3 -->
+                <div class="form-group row align-items-center mb-2">
+                  <label for="contactPerson3" class="col-4 col-form-label font-weight-bold">Contact Person 3</label>
+                  <div class="col-8">
+                    <input type="text" class="form-control form-control-sm" id="contactPerson3" th:field="*{contactPerson3}" placeholder="Enter Contact Person 3" maxlength="100">
+                  </div>
+                </div>
+
+                <!-- GST No -->
+                <div class="form-group row align-items-center mb-2">
+                  <label for="gstNo" class="col-4 col-form-label font-weight-bold">GST No <span class="text-danger">*</span></label>
+                  <div class="col-8">
+                    <input type="text" class="form-control form-control-sm" id="gstNo" th:field="*{gstNo}" placeholder="Enter GST Number" required="required" maxlength="20">
+                  </div>
+                </div>
+
+                <!-- City -->
+                <div class="form-group row align-items-center mb-2">
+                  <label for="city" class="col-4 col-form-label font-weight-bold">City <span class="text-danger">*</span></label>
+                  <div class="col-8">
+                    <input type="text" class="form-control form-control-sm" id="city" th:field="*{city}" placeholder="Enter City" required="required" maxlength="100">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right Column -->
+              <div class="col-md-6">
+                <!-- Email -->
+                <div class="form-group row align-items-center mb-2">
+                  <label for="email" class="col-4 col-form-label font-weight-bold">Email <span class="text-danger">*</span></label>
+                  <div class="col-8">
+                    <input type="email" class="form-control form-control-sm" id="email" th:field="*{email}" placeholder="Enter Email" required="required" maxlength="100">
+                  </div>
+                </div>
+
+                <!-- Mobile 1 -->
+                <div class="form-group row align-items-center mb-2">
+                  <label for="mobile1" class="col-4 col-form-label font-weight-bold">Mobile 1 <span class="text-danger">*</span></label>
+                  <div class="col-8">
+                    <input th:maxlength="10" type="text" class="form-control form-control-sm" id="mobile1" th:field="*{mobile1}" placeholder="Enter Mobile Number 1" required="required" maxlength="15">
+                  </div>
+                </div>
+
+                <!-- Mobile 2 -->
+                <div class="form-group row align-items-center mb-2">
+                  <label for="mobile2" class="col-4 col-form-label font-weight-bold">Mobile 2</label>
+                  <div class="col-8">
+                    <input th:maxlength="10" type="text" class="form-control form-control-sm" id="mobile2" th:field="*{mobile2}" placeholder="Enter Mobile Number 2" maxlength="15">
+                  </div>
+                </div>
+
+                <!-- Mobile 3 -->
+                <div class="form-group row align-items-center mb-2">
+                  <label for="mobile3" class="col-4 col-form-label font-weight-bold">Mobile 3</label>
+                  <div class="col-8">
+                    <input th:maxlength="10" type="text" class="form-control form-control-sm" id="mobile3" th:field="*{mobile3}" placeholder="Enter Mobile Number 3" maxlength="15">
+                  </div>
+                </div>
+
+                <!-- State -->
+                <div class="form-group row align-items-center mb-2">
+                  <label for="state" class="col-4 col-form-label font-weight-bold">State <span class="text-danger">*</span></label>
+                  <div class="col-8">
+                    <input type="text" class="form-control form-control-sm" id="state" th:field="*{state}" placeholder="Enter State" required="required" maxlength="100">
+                  </div>
+                </div>
+
+                <!-- Pincode -->
+                <div class="form-group row align-items-center mb-2">
+                  <label for="pincode" class="col-4 col-form-label font-weight-bold">Pincode <span class="text-danger">*</span></label>
+                  <div class="col-8">
+                    <input type="text" class="form-control form-control-sm" id="pincode" th:field="*{pincode}" placeholder="Enter Pincode" required="required" maxlength="6" pattern="[0-9]{6}" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Address (Full Width) -->
+            <div class="form-group row mb-2">
+              <label for="address" class="col-2 col-form-label font-weight-bold">Address <span class="text-danger">*</span></label>
+              <div class="col-10">
+                <textarea class="form-control form-control-sm" id="address" rows="1" th:field="*{address}" placeholder="Enter Address" required="required" maxlength="255"></textarea>
+              </div>
+            </div>
+
+            <hr
+              style="
+                border: none;
+                border-top: 3px dotted #333333;
+                margin: 25px 0;
+              "
+            />
+
+            <div
+              class="d-flex justify-content-between align-items-center mb-4"
+            >
+              <h4 class="card-title mb-0" style="font-weight: 500">
+                Vendor Item Mapping
+              </h4>
+              <button
+                type="button"
+                class="btn text-white font-weight-bold"
+                id="addRowBtn"
+                style="background: #3b82f6; border: none; padding: 7px 18px; border-radius: 6px; box-shadow: 0 2px 4px rgba(59,130,246,0.25);"
+              >
+                <i class="typcn typcn-plus"></i> Add Row
+              </button>
+            </div>
+
+            <div class="row">
+              <div class="col-md-12">
+                <div class="table-responsive mb-4">
+                  <table
+                    class="table table-striped table-bordered table-sm"
+                    id="mappingTable"
+                  >
+                    <thead style="background: #f8fafc; color: #475569; border-bottom: 2px solid #cbd5e1;">
+                      <tr>
+                        <th style="width: 22%; font-weight: 700; color: #334155;">Item Name</th>
+                        <th style="width: 15%; font-weight: 700; color: #334155;">Item Type</th>
+                        <th style="width: 12%; font-weight: 700; color: #334155;">Unit</th>
+                        <th style="width: 18%; font-weight: 700; color: #334155;">From Date</th>
+                        <th style="width: 18%; font-weight: 700; color: #334155;">Upto Date</th>
+                        <th style="width: 10%; font-weight: 700; color: #334155;">Rate</th>
+                        <th style="width: 5%; text-align: center; font-weight: 700; color: #334155;">
+                          Action
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr th:each="mapping, stat : *{mappings}">
+                        <td>
+                          <input
+                            type="hidden"
+                            th:field="*{mappings[__${stat.index}__].venItemId}"
+                          />
+                          <select
+                            class="form-control form-control-sm item-select"
+                            th:field="*{mappings[__${stat.index}__].item.itemId}"
+                            required="required"
+                          >
+                            <option value="">-- Select Item --</option>
+                            <option
+                              th:each="item : ${items}"
+                              th:value="${item.itemId}"
+                              th:text="${item.itemName}"
+                              th:data-type-id="${item.type != null ? item.type.typeId : ''}"
+                              th:data-type-name="${item.type != null ? item.type.typeName : ''}"
+                              th:data-unit-id="${item.unit != null ? item.unit.unitId : ''}"
+                              th:data-unit-name="${item.unit != null ? item.unit.unitName : ''}"
+                              th:data-rate="${item.rate}"
+                            ></option>
+                          </select>
+                        </td>
+                        <td>
+                          <!-- Read-only display for Item Type -->
+                          <input
+                            type="text"
+                            class="form-control form-control-sm type-name-display"
+                            readonly="readonly"
+                            placeholder="Auto-generated"
+                          />
+                        </td>
+                        <td>
+                          <!-- Read-only display for Unit -->
+                          <input
+                            type="text"
+                            class="form-control form-control-sm unit-name-display"
+                            readonly="readonly"
+                            placeholder="Auto-generated"
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="date"
+                            class="form-control form-control-sm"
+                            th:field="*{mappings[__${stat.index}__].fromDate}"
+                            required="required"
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="date"
+                            class="form-control form-control-sm"
+                            th:field="*{mappings[__${stat.index}__].uptoDate}"
+                            required="required"
+                          />
+                        </td>
+                        <td>
+                          <!-- Rate input, populated from item but saveable -->
+                          <input
+                            type="number"
+                            step="0.01"
+                            class="form-control form-control-sm rate-input"
+                            th:field="*{mappings[__${stat.index}__].rate}"
+                            placeholder="0.00"
+                            required="required"
+                          />
+                        </td>
+                        <td
+                          style="text-align: center; vertical-align: middle"
+                        >
+                          <div
+                            class="d-flex justify-content-center"
+                            style="gap: 5px"
+                          >
+                            <button
+                              type="button"
+                              class="btn btn-sm btn-danger delete-row-btn"
+                              title="Delete"
+                            >
+                              <i class="typcn typcn-trash"></i>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex align-items-center pt-2">
+              <button type="submit" class="btn text-white font-weight-bold mr-2" style="background: #10b981; border: none; padding: 9px 20px; border-radius: 6px; box-shadow: 0 2px 4px rgba(16,185,129,0.25);">
+                <i class="typcn typcn-tick"></i> Save
+              </button>
+              <a th:href="@{/vendors}" class="btn text-white font-weight-bold mr-2" style="background: #64748b; border: none; padding: 9px 20px; border-radius: 6px;">
+                <i class="typcn typcn-arrow-left"></i> Back to List
+              </a>
+              <button type="reset" class="btn font-weight-bold" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 9px 20px; border-radius: 6px;">Reset</button>
+            </div>
+          </form>
+
+          <script>
+            document.addEventListener("DOMContentLoaded", function () {
+              // Auto-grow textarea for Address
+              var addressEl = document.getElementById("address");
+              if (addressEl) {
+                addressEl.style.resize = "none";
+                addressEl.style.overflowY = "hidden";
+                setTimeout(function() {
+                  addressEl.style.height = "auto";
+                  addressEl.style.height = addressEl.scrollHeight + "px";
+                }, 50);
+
+                addressEl.addEventListener("input", function() {
+                  this.style.height = "auto";
+                  this.style.height = this.scrollHeight + "px";
+                });
+              }
+
+              function reindexRows() {
+                var rows = document.querySelectorAll(
+                  "#mappingTable tbody tr",
+                );
+                rows.forEach(function (row, index) {
+                  var mappingIdInput = row.querySelector(
+                    'input[name$=".venItemId"]',
+                  );
+                  if (mappingIdInput) {
+                    mappingIdInput.name = "mappings[" + index + "].venItemId";
+                    mappingIdInput.id = "mappings" + index + ".venItemId";
+                  }
+
+                  var itemSelect = row.querySelector(
+                    'select[name$=".item.itemId"]',
+                  );
+                  if (itemSelect) {
+                    itemSelect.name = "mappings[" + index + "].item.itemId";
+                    itemSelect.id = "mappings" + index + ".item.itemId";
+                  }
+
+                  // Hidden fields for type and unit IDs removed (auto-generated)
+
+                  var fromDateInput = row.querySelector(
+                    'input[name$=".fromDate"]',
+                  );
+                  if (fromDateInput) {
+                    fromDateInput.name = "mappings[" + index + "].fromDate";
+                    fromDateInput.id = "mappings" + index + ".fromDate";
+                  }
+
+                  var uptoDateInput = row.querySelector(
+                    'input[name$=".uptoDate"]',
+                  );
+                  if (uptoDateInput) {
+                    uptoDateInput.name = "mappings[" + index + "].uptoDate";
+                    uptoDateInput.id = "mappings" + index + ".uptoDate";
+                  }
+
+                  var rateInput = row.querySelector('input[name$=".rate"]');
+                  if (rateInput) {
+                    rateInput.name = "mappings[" + index + "].rate";
+                    rateInput.id = "mappings" + index + ".rate";
+                  }
+                });
+              }
+
+              // Function to update auto-populated display fields for a single row
+              function updateRowDisplay(row) {
+                var itemSelect = row.querySelector(".item-select");
+                var typeNameDisplay = row.querySelector(".type-name-display");
+                var unitNameDisplay = row.querySelector(".unit-name-display");
+
+                if (itemSelect && itemSelect.selectedIndex > 0) {
+                  var selectedOption =
+                    itemSelect.options[itemSelect.selectedIndex];
+                  if (typeNameDisplay)
+                    typeNameDisplay.value =
+                      selectedOption.getAttribute("data-type-name") || "";
+                  if (unitNameDisplay)
+                    unitNameDisplay.value =
+                      selectedOption.getAttribute("data-unit-name") || "";
+                } else {
+                  if (typeNameDisplay) typeNameDisplay.value = "";
+                  if (unitNameDisplay) unitNameDisplay.value = "";
+                }
+              }
+
+              // Initialize displays for all existing rows on page load
+              document
+                .querySelectorAll("#mappingTable tbody tr")
+                .forEach(function (row) {
+                  updateRowDisplay(row);
+                });
+
+              // Add row functionality
+              document
+                .getElementById("addRowBtn")
+                .addEventListener("click", function () {
+                  var tbody = document.querySelector("#mappingTable tbody");
+                  var firstRow = tbody.querySelector("tr");
+                  var newRow = firstRow.cloneNode(true);
+
+                  // Clear all inputs and selects in the cloned row
+                  newRow.querySelectorAll("input").forEach(function (input) {
+                    input.value = "";
+                  });
+                  newRow
+                    .querySelectorAll("select")
+                    .forEach(function (select) {
+                      select.selectedIndex = 0;
+                    });
+
+                  // Reset displays for new row
+                  newRow.querySelector(".type-name-display").value = "";
+                  newRow.querySelector(".unit-name-display").value = "";
+
+                  tbody.appendChild(newRow);
+                  reindexRows();
+                });
+
+              // Delete row functionality
+              document
+                .querySelector("#mappingTable")
+                .addEventListener("click", function (e) {
+                  if (e.target.closest(".delete-row-btn")) {
+                    var row = e.target.closest("tr");
+                    var tbody = document.querySelector("#mappingTable tbody");
+                    if (tbody.querySelectorAll("tr").length > 1) {
+                      row.remove();
+                      reindexRows();
+                    } else {
+                      alert(
+                        "At least one row must remain in the mapping table.",
+                      );
+                    }
+                  }
+                });
+
+              // Listen to item select change to populate mapping row fields and check for duplicates
+              document
+                .querySelector("#mappingTable")
+                .addEventListener("change", function (e) {
+                  if (e.target.classList.contains("item-select")) {
+                    var row = e.target.closest("tr");
+                    var itemSelect = e.target;
+                    var selectedItemId = itemSelect.value;
+
+                    if (selectedItemId) {
+                      var allSelects = document.querySelectorAll("#mappingTable .item-select");
+                      var isDuplicate = false;
+                      allSelects.forEach(function(otherSelect) {
+                        if (otherSelect !== itemSelect && otherSelect.value === selectedItemId) {
+                          isDuplicate = true;
+                        }
+                      });
+
+                      if (isDuplicate) {
+                        alert("Item is already selected");
+                        itemSelect.selectedIndex = 0;
+                        updateRowDisplay(row);
+                        var rateInput = row.querySelector(".rate-input");
+                        if (rateInput) rateInput.value = "";
+                        return;
+                      }
+                    }
+
+                    updateRowDisplay(row);
+
+                    // Auto-populate rate input on explicit change of selection
+                    var rateInput = row.querySelector(".rate-input");
+                    if (itemSelect.selectedIndex > 0) {
+                      var selectedOption =
+                        itemSelect.options[itemSelect.selectedIndex];
+                      if (rateInput) {
+                        rateInput.value =
+                          selectedOption.getAttribute("data-rate") || "";
+                      }
+                    } else {
+                      if (rateInput) rateInput.value = "";
+                    }
+                  }
+                });
+
+              // Prevent form submit if duplicate items are selected
+              var vendorForm = document.querySelector("form.forms-sample");
+              if (vendorForm) {
+                vendorForm.addEventListener("submit", function (e) {
+                  var selects = document.querySelectorAll("#mappingTable .item-select");
+                  var seen = new Set();
+                  var hasDuplicate = false;
+                  selects.forEach(function (select) {
+                    var val = select.value;
+                    if (val) {
+                      if (seen.has(val)) {
+                        hasDuplicate = true;
+                      } else {
+                        seen.add(val);
+                      }
+                    }
+                  });
+                  if (hasDuplicate) {
+                    e.preventDefault();
+                    alert("Item is already selected");
+                  }
+                });
+              }
+            });
+          </script>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</html>

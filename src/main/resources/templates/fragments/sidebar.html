@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org">
+
+<body>
+  <nav th:fragment="sidebar" class="sidebar sidebar-offcanvas" id="sidebar">
+    <ul class="nav">
+      <li class="nav-item">
+        <div class="d-flex sidebar-profile">
+          <div class="sidebar-profile-image">
+            <img th:src="@{/images/faces/face29.png}" alt="image" />
+            <span class="sidebar-status-indicator"></span>
+          </div>
+          <div class="sidebar-profile-name">
+            <p class="sidebar-name">Kenneth Osborne</p>
+            <p class="sidebar-designation">Welcome</p>
+          </div>
+        </div>
+
+        <p class="sidebar-menu-title">Menu</p>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" th:href="@{/}">
+          <i class="typcn typcn-device-desktop menu-icon"></i>
+          <span class="menu-title">Dashboard
+            <span class="badge badge-primary ml-3">New</span></span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" data-toggle="collapse" href="#ui-basic" aria-expanded="false" aria-controls="ui-basic">
+          <i class="typcn typcn-briefcase menu-icon"></i>
+          <span class="menu-title">Master</span>
+          <i class="typcn typcn-chevron-right menu-arrow"></i>
+        </a>
+        <div class="collapse" id="ui-basic">
+          <ul class="nav flex-column sub-menu">
+            <li class="nav-item">
+              <a class="nav-link" th:href="@{/vendors}">Vendor Master</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" th:href="@{/items}">Item Master</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" th:href="@{/units}">Unit Master</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" th:href="@{/types}">Type Master</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" th:href="@{/users}">User Master</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" th:href="@{/suppliers}">Supplier Master</a>
+            </li>
+          </ul>
+        </div>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link" data-toggle="collapse" href="#ux-basic" aria-expanded="false" aria-controls="ux-basic">
+          <i class="typcn typcn-briefcase menu-icon"></i>
+          <span class="menu-title">Transactions</span>
+          <i class="typcn typcn-chevron-right menu-arrow"></i>
+        </a>
+        <div class="collapse" id="ux-basic">
+          <ul class="nav flex-column sub-menu">
+            <li class="nav-item">
+              <a class="nav-link" th:href="@{/stocks}">Current Stock</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" th:href="@{/bookingrequest}">Booking Request</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" th:href="@{/sales}">Challan Order</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" th:href="@{/delivered-sales}">Delivered Quantity</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" th:href="@{/purchaseorders}">Purchase Order</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" th:href="@{/accounts}">Account Payable</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" th:href="@{/supplier-accounts}">Account Receivable</a>
+            </li>
+          </ul>
+        </div>
+      <li class="nav-item">
+        <a class="nav-link" data-toggle="collapse" href="#report-menu" aria-expanded="false" aria-controls="report-menu">
+          <i class="typcn typcn-clipboard menu-icon"></i>
+          <span class="menu-title">Report</span>
+          <i class="typcn typcn-chevron-right menu-arrow"></i>
+        </a>
+        <div class="collapse" id="report-menu">
+          <ul class="nav flex-column sub-menu">
+            <li class="nav-item">
+              <a class="nav-link" th:href="@{/reports/ledger-stock}">Ledger Stock</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" th:href="@{/reports/account-ledger}">Account Ledger Report</a>
+            </li>
+          </ul>
+        </div>
+      </li>
+
+
+
+
+    </ul>
+  </nav>
+</body>
+
+</html>
+
+</html>

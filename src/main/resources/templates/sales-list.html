@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+
+<div layout:fragment="content">
+    <div class="col-lg-12 grid-margin stretch-card">
+        <div class="card" style="border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+            <div class="card-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 16px 24px;">
+                <h4 class="mb-0 text-white font-weight-bold" style="letter-spacing: 0.3px;">
+                    <i class="typcn typcn-th-list mr-2" style="font-size: 1.3rem; vertical-align: middle;"></i>
+                    Challan Order List
+                </h4>
+            </div>
+
+            <div class="card-body p-4">
+                <!-- Flash messages -->
+                <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                    <span th:text="${successMessage}"></span>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <span th:text="${errorMessage}"></span>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="table-responsive">
+                    <table id="dataTable" class="table table-hover table-bordered mb-0" style="font-size: 13.5px; border: 1px solid #e2e8f0;">
+                        <thead style="background: #f8fafc; color: #475569; border-bottom: 2px solid #cbd5e1;">
+                        <tr>
+                            <th style="font-weight: 700; color: #334155;">Booking Number</th>
+                            <th style="font-weight: 700; color: #334155;">Challan Order Number</th>
+                            <th style="font-weight: 700; color: #334155;">Supplier Name</th>
+                            <th class="text-center" style="width: 120px; font-weight: 700; color: #334155;">Entry Date</th>
+                            <th class="text-center" style="width: 120px; font-weight: 700; color: #334155;">Status</th>
+                            <th style="width: 140px; text-align: center; font-weight: 700; color: #334155;">Action</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+
+                         <tr th:each="entry, iterStat : ${groupedRequests}" th:if="${not #maps.isEmpty(groupedRequests)}">
+                             <td style="font-weight: 700; color: #0f172a; white-space: nowrap;" th:text="${entry.key}"></td>
+                             <td style="font-weight: 700; color: #0f172a; white-space: nowrap;" th:text="${groupedSalesOrderNos.get(entry.key) != null ? groupedSalesOrderNos.get(entry.key) : '—'}"></td>
+                             <td style="white-space: nowrap;" th:text="${groupedSuppliers.get(entry.key) != null ? groupedSuppliers.get(entry.key) : '—'}"></td>
+                             <td class="text-center" style="color: #475569; white-space: nowrap;" th:text="${groupedEntryDates.get(entry.key) != null ? #dates.format(groupedEntryDates.get(entry.key), 'dd-MMM-yyyy') : '-'}"></td>
+                              <td class="text-center">
+                                  <!-- Status 1: create (Indigo) -->
+                                  <span th:if="${salesOrderStatusMap.get(entry.key) == null or salesOrderStatusMap.get(entry.key) == 1}" class="badge" style="background-color: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; font-weight: 600; padding: 5px 12px; border-radius: 6px;">create</span>
+                                  <!-- Status 2: Partially Send (Orange) -->
+                                  <span th:if="${salesOrderStatusMap.get(entry.key) == 2}" class="badge" style="background-color: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-weight: 600; padding: 5px 12px; border-radius: 6px;">Partially Send</span>
+                                  <!-- Status 3: send (Green) -->
+                                  <span th:if="${salesOrderStatusMap.get(entry.key) == 3}" class="badge" style="background-color: #dcfce7; color: #15803d; border: 1px solid #86efac; font-weight: 600; padding: 5px 12px; border-radius: 6px;">send</span>
+                              </td>
+                              <td style="text-align: center;">
+                                  <div class="d-flex justify-content-center" style="gap: 5px">
+                                      <!-- View Details Button -->
+                                      <button type="button" 
+                                              class="btn btn-sm text-white font-weight-bold" 
+                                              style="background: #3b82f6; border: none; padding: 6px 14px; border-radius: 6px; box-shadow: 0 2px 4px rgba(59,130,246,0.25);"
+                                              data-toggle="modal" 
+                                              th:data-target="'#detailsModal-' + ${iterStat.index}"
+                                              title="View Details">
+                                          <i class="typcn typcn-eye"></i> View
+                                      </button>
+                                      <!-- Create button: only when status=1 or null (create) -->
+                                      <a th:if="${salesOrderStatusMap.get(entry.key) == null or salesOrderStatusMap.get(entry.key) == 1}"
+                                         th:href="@{/sales/new(bookingNo=${entry.key})}"
+                                         class="btn btn-sm text-white font-weight-bold" 
+                                         style="background: #6366f1; border: none; padding: 6px 14px; border-radius: 6px; box-shadow: 0 2px 4px rgba(99,102,241,0.25);"
+                                         title="Create Challan Order">
+                                          <i class="typcn typcn-plus"></i> Create
+                                      </a>
+                                       <!-- Create button: when status=2 (Partially) -->
+                                       <a th:if="${salesOrderStatusMap.get(entry.key) == 2}"
+                                          th:href="@{/sales/new(bookingNo=${entry.key})}"
+                                          class="btn btn-sm text-white font-weight-bold" 
+                                          style="background: #6366f1; border: none; padding: 6px 14px; border-radius: 6px; box-shadow: 0 2px 4px rgba(99,102,241,0.25);"
+                                          title="Create">
+                                           <i class="typcn typcn-plus"></i> Create
+                                       </a>
+                                  </div>
+
+                                  <!-- Modal for Booking Details -->
+                                  <div class="modal fade" th:id="'detailsModal-' + ${iterStat.index}" tabindex="-1" role="dialog" aria-labelledby="detailsModalLabel" aria-hidden="true">
+                                      <div class="modal-dialog modal-lg" role="document">
+                                          <div class="modal-content" style="border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15);">
+                                              <!-- Modal Header -->
+                                              <div class="modal-header" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff; padding: 14px 24px; border-bottom: none;">
+                                                  <div class="d-flex align-items-center">
+                                                      <span class="mr-2" style="display:inline-block; width:8px; height:8px; background:#38bdf8; border-radius:50%;"></span>
+                                                      <h5 class="modal-title font-weight-bold text-white mb-0" style="letter-spacing: 0.3px; font-size: 1.05rem;" th:text="'Booking Request Details - ' + ${entry.key}"></h5>
+                                                  </div>
+                                                  <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" style="opacity: 0.9;">
+                                                      <span aria-hidden="true">&times;</span>
+                                                  </button>
+                                              </div>
+
+                                              <!-- Modal Body -->
+                                              <div class="modal-body p-0" style="background: #ffffff;">
+                                                   <!-- Metadata Bar -->
+                                                   <div style="background: #ffffff; padding: 18px 24px; border-bottom: 1px solid #f1f5f9; font-size: 14px; color: #475569;">
+                                                       <div class="row align-items-center">
+                                                           <div class="col-md-4 col-6 mb-2 mb-md-0">
+                                                               <span>Booking No.:</span> <strong style="color: #0f172a;" th:text="${entry.key}"></strong>
+                                                           </div>
+                                                           <div class="col-md-5 col-6 mb-2 mb-md-0">
+                                                               <span>Supplier Name(s):</span> <strong style="color: #0f172a;" th:text="${groupedSuppliers.get(entry.key)}"></strong>
+                                                           </div>
+                                                           <div class="col-md-3 col-12 text-md-right d-flex align-items-center justify-content-md-end">
+                                                               <span class="mr-2">Status:</span>
+                                                               <!-- Status 1: create -->
+                                                               <span th:if="${salesOrderStatusMap.get(entry.key) == null or salesOrderStatusMap.get(entry.key) == 1}" class="badge" style="background-color: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; font-weight: 600; padding: 4px 12px; border-radius: 12px;">create</span>
+                                                               <!-- Status 2: Partially Send -->
+                                                               <span th:if="${salesOrderStatusMap.get(entry.key) == 2}" class="badge" style="background-color: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-weight: 600; padding: 4px 12px; border-radius: 12px;">Partially Send</span>
+                                                               <!-- Status 3: send -->
+                                                               <span th:if="${salesOrderStatusMap.get(entry.key) == 3}" class="badge" style="background-color: #dcfce7; color: #15803d; border: 1px solid #86efac; font-weight: 600; padding: 4px 12px; border-radius: 12px;">send</span>
+                                                           </div>
+                                                       </div>
+                                                   </div>
+
+                                                   <!-- Items Table -->
+                                                   <div class="p-4">
+                                                       <div class="table-responsive">
+                                                           <table class="table table-bordered mb-0" style="border: 1px solid #e2e8f0; font-size: 14px;">
+                                                               <thead style="background: #f1f5f9; color: #334155; font-weight: 700; border-bottom: 2px solid #cbd5e1;">
+                                                                   <tr>
+                                                                       <th class="text-center" style="width: 70px; white-space: nowrap;">SI No.</th>
+                                                                       <th style="width: 110px; white-space: nowrap;">Item Code</th>
+                                                                       <th style="white-space: nowrap;">Item Name</th>
+                                                                       <th style="white-space: nowrap;">Item Type</th>
+                                                                       <th class="text-right" style="white-space: nowrap;">Rate</th>
+                                                                       <th class="text-center" style="width: 90px; white-space: nowrap;">Quantity</th>
+                                                                       <th class="text-center" style="width: 110px; white-space: nowrap;">Delivered Qty</th>
+                                                                       <th class="text-right" style="white-space: nowrap;">Total Cost</th>
+                                                                   </tr>
+                                                               </thead>
+                                                               <tbody>
+                                                                   <tr th:each="m, itemIter : ${groupedItemMappings.get(entry.key)}">
+                                                                        <td class="text-center font-weight-bold" style="color: #64748b; white-space: nowrap;" th:text="${itemIter.count}"></td>
+                                                                        <td style="white-space: nowrap;" th:text="${itemMap.get(m.itemId) != null ? itemMap.get(m.itemId).itemCode : 'N/A'}"></td>
+                                                                        <td style="font-weight: 700; color: #0f172a; white-space: nowrap;" th:text="${itemMap.get(m.itemId) != null ? itemMap.get(m.itemId).itemName : 'N/A'}"></td>
+                                                                        <td style="white-space: nowrap;" th:text="${itemMap.get(m.itemId) != null and itemMap.get(m.itemId).type != null ? itemMap.get(m.itemId).type.typeName : 'N/A'}"></td>
+                                                                        <td class="text-right" style="white-space: nowrap;" th:text="${itemMap.get(m.itemId) != null and itemMap.get(m.itemId).rate != null ? '₹' + #numbers.formatDecimal(itemMap.get(m.itemId).rate, 1, 2) : '₹0.00'}"></td>
+                                                                        <td class="text-center" style="white-space: nowrap;" th:text="${m.quantity != null ? m.quantity : 0}"></td>
+                                                                        <td class="text-center" style="white-space: nowrap;" th:text="${bookingDeliveredQtyMap.get(entry.key) != null and bookingDeliveredQtyMap.get(entry.key).get(m.itemId) != null ? bookingDeliveredQtyMap.get(entry.key).get(m.itemId) : 0}"></td>
+                                                                        <td class="text-right font-weight-bold" style="color: #0f172a; white-space: nowrap;" th:text="${itemMap.get(m.itemId) != null and itemMap.get(m.itemId).rate != null and m.quantity != null ? '₹' + #numbers.formatDecimal(itemMap.get(m.itemId).rate * m.quantity, 1, 2) : '₹0.00'}"></td>
+                                                                    </tr>
+                                                               </tbody>
+                                                           </table>
+                                                       </div>
+
+                                                       <!-- Grand Total Section -->
+                                                       <div class="text-right pt-3 pb-2 pr-1" style="font-size: 15px; font-weight: 700; color: #334155;">
+                                                           Grand Total: 
+                                                           <span style="color: #10b981; font-weight: 800; font-size: 1.25rem; margin-left: 8px;" th:text="${groupedTotals.get(entry.key) != null ? '₹' + #numbers.formatDecimal(groupedTotals.get(entry.key), 1, 2) : '₹0.00'}">₹0.00</span>
+                                                       </div>
+
+                                                       <!-- Saved Challan Orders / Dispatches History (Every Saved Entry) -->
+                                                       <div th:if="${bookingSalesOrdersMap != null and bookingSalesOrdersMap.get(entry.key) != null and !bookingSalesOrdersMap.get(entry.key).isEmpty()}" class="mt-4 pt-3 border-top">
+                                                           <h6 class="mb-3 font-weight-bold text-dark d-flex align-items-center" style="font-size: 0.95rem;">
+                                                               <i class="typcn typcn-history mr-2" style="color: #6366f1; font-size: 1.2rem;"></i>
+                                                               Saved Challan Orders History (<span th:text="${bookingSalesOrdersMap.get(entry.key).size()}"></span> Saved Entry<span th:if="${bookingSalesOrdersMap.get(entry.key).size() > 1}">ies</span>)
+                                                           </h6>
+
+                                                           <div th:each="so, soStat : ${bookingSalesOrdersMap.get(entry.key)}" th:if="${so.details != null and !so.details.isEmpty()}" class="card mb-3" style="border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.03);">
+                                                               <div class="card-header d-flex justify-content-between align-items-center py-2 px-3" style="background: #f8fafc; border-bottom: 1px solid #cbd5e1;">
+                                                                   <div class="d-flex align-items-center">
+                                                                       <span class="badge mr-2 text-white font-weight-bold" style="background: #6366f1; font-size: 0.8rem; padding: 4px 10px; border-radius: 4px;" th:text="${so.salesOrderNo}">CO-00001</span>
+                                                                       <small class="text-muted font-weight-bold" th:text="${so.entryDate != null ? #dates.format(so.entryDate, 'dd-MMM-yyyy hh:mm a') : ''}"></small>
+                                                                   </div>
+                                                                   <div>
+                                                                       <small class="text-muted font-weight-bold mr-2">Dispatched Value:</small>
+                                                                       <span class="font-weight-bold" style="color: #10b981; font-size: 0.95rem;" th:text="${so.totalCost != null ? '₹' + #numbers.formatDecimal(so.totalCost, 1, 2) : '₹0.00'}">₹0.00</span>
+                                                                   </div>
+                                                               </div>
+                                                               <div class="card-body p-0">
+                                                                   <div class="table-responsive">
+                                                                       <table class="table table-sm table-bordered mb-0" style="font-size: 13px; border: none;">
+                                                                           <thead style="background: #ffffff; color: #475569;">
+                                                                               <tr>
+                                                                                   <th class="text-center" style="width: 55px; white-space: nowrap;">Sl No.</th>
+                                                                                   <th style="white-space: nowrap;">Item Name</th>
+                                                                                   <th style="white-space: nowrap;">Item Type</th>
+                                                                                   <th class="text-right" style="white-space: nowrap;">Rate</th>
+                                                                                   <th class="text-center" style="width: 100px; white-space: nowrap;">Sent (Qty)</th>
+                                                                                   <th class="text-right" style="white-space: nowrap;">Total Cost</th>
+                                                                               </tr>
+                                                                           </thead>
+                                                                           <tbody>
+                                                                               <tr th:each="d, dStat : ${so.details}">
+                                                                                   <td class="text-center font-weight-bold" style="color: #64748b;" th:text="${dStat.count}">1</td>
+                                                                                   <td style="font-weight: 700; color: #0f172a;" th:text="${itemMap.get(d.itemId.intValue()) != null ? itemMap.get(d.itemId.intValue()).itemName : ('Item #' + d.itemId)}">Item Name</td>
+                                                                                   <td style="color: #475569;" th:text="${itemMap.get(d.itemId.intValue()) != null and itemMap.get(d.itemId.intValue()).type != null ? itemMap.get(d.itemId.intValue()).type.typeName : 'N/A'}">Item Type</td>
+                                                                                   <td class="text-right" style="color: #334155;" th:text="${d.rate != null ? '₹' + #numbers.formatDecimal(d.rate, 1, 2) : '₹0.00'}">₹0.00</td>
+                                                                                   <td class="text-center font-weight-bold" style="color: #0f172a;" th:text="${d.deliveredQuantity != null ? d.deliveredQuantity : 0}">0</td>
+                                                                                   <td class="text-right font-weight-bold" style="color: #10b981;" th:text="${d.totalCost != null ? '₹' + #numbers.formatDecimal(d.totalCost, 1, 2) : (d.rate != null and d.deliveredQuantity != null ? '₹' + #numbers.formatDecimal(d.rate * d.deliveredQuantity, 1, 2) : '₹0.00')}">₹0.00</td>
+                                                                               </tr>
+                                                                           </tbody>
+                                                                       </table>
+                                                                   </div>
+                                                               </div>
+                                                           </div>
+                                                       </div>
+                                                   </div>
+                                              </div>
+
+                                              <!-- Modal Footer Bar -->
+                                              <div class="modal-footer bg-white d-flex justify-content-between align-items-center p-3 border-top">
+                                                  <button type="button" onclick="window.print()" class="btn text-white font-weight-bold" style="background: #10b981; border: none; padding: 8px 22px; border-radius: 6px; box-shadow: 0 2px 4px rgba(16,185,129,0.25);">
+                                                      <i class="typcn typcn-printer mr-1" style="font-size: 1.1rem; vertical-align: middle;"></i> Print
+                                                  </button>
+                                                  <div class="d-flex align-items-center">
+                                                       <!-- Create button: status=2 (Partially) -->
+                                                       <a th:if="${salesOrderStatusMap.get(entry.key) == 2}"
+                                                          th:href="@{/sales/new(bookingNo=${entry.key})}"
+                                                          class="btn text-white font-weight-bold"
+                                                          style="background: #6366f1; border: none; padding: 8px 20px; border-radius: 6px; box-shadow: 0 2px 4px rgba(99,102,241,0.25); margin-right: 8px; display: inline-block;">
+                                                           <i class="typcn typcn-plus"></i> Create
+                                                       </a>
+                                                      <button type="button" class="btn text-white font-weight-bold" data-dismiss="modal" style="background: #64748b; border: none; padding: 8px 26px; border-radius: 6px;">Close</button>
+                                                  </div>
+                                              </div>
+                                          </div>
+                                      </div>
+                                  </div>
+                             </td>
+                         </tr>
+
+                        <!-- Show if no records -->
+                        <tr th:if="${#maps.isEmpty(groupedRequests)}">
+                            <td colspan="6" class="text-center text-muted py-4">
+                                No records found.
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</html>

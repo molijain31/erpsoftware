@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+
+<div layout:fragment="content">
+
+    <div class="col-12 grid-margin stretch-card">
+        <div class="card" style="border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+
+            <div class="card-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 16px 24px;">
+                <h4 class="mb-0 text-white font-weight-bold" style="letter-spacing: 0.3px;">
+                    <i class="typcn typcn-document-add mr-2" style="font-size: 1.3rem; vertical-align: middle;"></i>
+                    Booking Request Form
+                </h4>
+                <a th:href="@{/bookingrequest}" class="btn btn-sm font-weight-bold" style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; padding: 6px 14px; border-radius: 6px;">
+                    <i class="typcn typcn-arrow-left"></i> Back to List
+                </a>
+            </div>
+
+            <div class="card-body p-4">
+
+                <form th:action="@{/bookingrequest/save}" method="post" id="bookingRequestForm">
+
+                    <!-- Hidden input to submit the selected supplier's name -->
+                    <input type="hidden" id="supplierNameInput" name="supplierName" required />
+
+                    <div class="row">
+
+                        <!-- Supplier Dropdown -->
+                        <div class="col-md-12 mb-3">
+                            <label>Supplier <span class="text-danger">*</span></label>
+                            <select class="form-control"
+                                    id="supplier"
+                                    required>
+                                <option value="">Select Supplier</option>
+                                <option th:each="supplier : ${suppliers}"
+                                        th:value="${supplier.supplierId}"
+                                        th:data-name="${supplier.contactPerson}"
+                                        th:text="${supplier.contactPerson + (supplier.supplierCode != null ? ' (' + supplier.supplierCode + ')' : '')}">
+                                </option>
+                            </select>
+                        </div>
+
+                    </div>
+
+                    <hr>
+
+                    <div id="supplierDetailsCard" style="display: none; margin-bottom: 25px;">
+                        
+                        <!--Item Selector Section -->
+                        <div class="row align-items-end mb-4">
+                            <div class="col-md-9 form-group mb-0">
+                                <label for="itemSelector" style="font-weight: 600;"> Items List <span class="text-danger">*</span></label>
+                                <select class="form-control" id="itemSelector">
+                                    <option value=""> Choose Item </option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 form-group mb-0">
+                                <button type="button" class="btn text-white font-weight-bold w-100" id="addItemBtn" style="height: 43px; background: #3b82f6; border: none; border-radius: 6px; box-shadow: 0 2px 4px rgba(59,130,246,0.25);">
+                                    <i class="typcn typcn-plus"></i> Add Item
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Selected Items Table -->
+                        <div id="itemsContainer" style="margin-top: 25px;">
+                            <h6 class="mb-3" style="font-weight: 600;">
+                                Selected Items List
+                            </h6>
+                            
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-striped" id="itemsTable">
+                                      <thead>
+                                          <tr>
+                                              <th>Item Code</th>
+                                              <th>Item Name</th>
+                                              <th>Item Type</th>
+                                              <th>Rate (Supplier Master)</th>
+                                              <th style="width: 200px;">No. of Items (Qty)</th>
+                                              <th>Total Cost</th>
+                                              <th style="width: 100px; text-align: center;">Action</th>
+                                          </tr>
+                                      </thead>
+                                      <tbody id="itemsTableBody">
+                                          <tr class="no-items-row">
+                                              <td colspan="7" class="text-center">No items added yet. Choose an item from the list above and click "Add Item".</td>
+                                          </tr>
+                                      </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center pt-3">
+                        <button type="submit" class="btn text-white font-weight-bold mr-2" style="background: #10b981; border: none; padding: 9px 22px; border-radius: 6px; box-shadow: 0 2px 4px rgba(16,185,129,0.25);">
+                            <i class="typcn typcn-tick mr-1"></i> Save Booking Request
+                        </button>
+
+                        <a th:href="@{/bookingrequest}" class="btn text-white font-weight-bold mr-2" style="background: #64748b; border: none; padding: 9px 22px; border-radius: 6px;">
+                            Back
+                        </a>
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const supplierSelect = document.getElementById("supplier");
+            const detailsCard = document.getElementById("supplierDetailsCard");
+            const supplierNameInput = document.getElementById("supplierNameInput");
+            const itemSelector = document.getElementById("itemSelector");
+            const addItemBtn = document.getElementById("addItemBtn");
+            const itemsTableBody = document.getElementById("itemsTableBody");
+
+            // Utility to render options in the mapped item selector
+            function populateItemSelector(itemsList) {
+                itemSelector.innerHTML = '<option value="">-- Choose Item --</option>';
+
+                if (!itemsList || itemsList.length === 0) {
+                    return;
+                }
+
+                const seenItemIds = new Set();
+
+                itemsList.forEach(item => {
+                    if (!item) return;
+                    let itemIdVal = (item.itemId !== undefined && item.itemId !== null) ? item.itemId : ((item.id !== undefined && item.id !== null) ? item.id : '');
+                    if (itemIdVal === '' || itemIdVal === undefined || itemIdVal === null) return;
+
+                    const strId = String(itemIdVal);
+                    if (seenItemIds.has(strId)) {
+                        return; // Skip duplicate item
+                    }
+                    seenItemIds.add(strId);
+
+                    let parsedRate = parseFloat(item.rate);
+                    let rateVal = isNaN(parsedRate) ? 0.0 : parsedRate;
+                    let typeNameVal = item.typeName;
+                    if (!typeNameVal && item.type) {
+                        typeNameVal = item.type.typeName;
+                    }
+
+                    let option = document.createElement("option");
+                    option.value = itemIdVal;
+                    option.textContent = (item.itemName || 'N/A') + ' (Code: ' + (item.itemCode || 'N/A') + ')';
+                    option.setAttribute("data-code", item.itemCode || 'N/A');
+                    option.setAttribute("data-name", item.itemName || 'N/A');
+                    option.setAttribute("data-type", typeNameVal || 'N/A');
+                    option.setAttribute("data-rate", rateVal);
+                    itemSelector.appendChild(option);
+                });
+            }
+
+            let activeSupplierId = supplierSelect ? supplierSelect.value : "";
+
+            // Supplier dropdown change listener
+            supplierSelect.addEventListener("change", function () {
+                let supplierId = this.value;
+
+                // Automatically clear items table when supplier is changed
+                const existingItems = itemsTableBody.querySelectorAll("tr:not(.no-items-row)");
+                if (existingItems.length > 0 && supplierId !== activeSupplierId) {
+                    itemsTableBody.innerHTML = `
+                        <tr class="no-items-row">
+                            <td colspan="7" class="text-center">No items added yet. Choose an item from the list above and click "Add Item".</td>
+                        </tr>
+                    `;
+                }
+
+                activeSupplierId = supplierId;
+
+                if (supplierId == "") {
+                    detailsCard.style.display = "none";
+                    supplierNameInput.value = "";
+                    itemSelector.innerHTML = '<option value="">-- Choose Item --</option>';
+                    itemsTableBody.innerHTML = `
+                        <tr class="no-items-row">
+                            <td colspan="7" class="text-center">No items added yet. Choose an item from the list above and click "Add Item".</td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                let fetchedSupplierData = null;
+
+                // Fetch selected supplier details
+                fetch("/bookingrequest/supplier/" + supplierId)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error("Network response was not ok");
+                        }
+                        return response.json();
+                    })
+                    .then(supplierData => {
+                        fetchedSupplierData = supplierData;
+
+                        // Bind hidden supplierName input
+                        const supplierName = (supplierData && supplierData.supplierName) ? supplierData.supplierName : "N/A";
+                        supplierNameInput.value = supplierName;
+
+                        const sType = (supplierData && supplierData.supplierType) ? supplierData.supplierType : "Unknown";
+                        const supplierTypeElem = document.getElementById("summarySupplierType");
+                        if (supplierTypeElem) {
+                            supplierTypeElem.textContent = sType;
+                        }
+
+                        // Fetch items mapped to this supplier
+                        return fetch("/bookingrequest/supplier/" + supplierId + "/mappings");
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error("Failed to fetch mappings");
+                        }
+                        return response.json();
+                    })
+                    .then(mappings => {
+                        if (mappings && mappings.length > 0) {
+                            populateItemSelector(mappings);
+                            detailsCard.style.display = "block";
+                        } else {
+                            // Fallback: Fetch general items based on supplier type
+                            const sType = fetchedSupplierData ? (fetchedSupplierData.supplierType || "Unknown") : "Unknown";
+                            fetch("/bookingrequest/items/type/" + encodeURIComponent(sType))
+                                .then(response => {
+                                    if (!response.ok) {
+                                        throw new Error("Failed to fetch fallback items");
+                                    }
+                                    return response.json();
+                                })
+                                .then(fallbackItems => {
+                                    populateItemSelector(fallbackItems);
+                                    detailsCard.style.display = "block";
+                                })
+                                .catch(err => {
+                                    console.error("Error loading fallback items:", err);
+                                    populateItemSelector([]);
+                                    detailsCard.style.display = "block";
+                                });
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Error loading supplier items mappings:", err);
+                        detailsCard.style.display = "none";
+                    });
+            });
+
+            // Trigger pop-up immediately if an already selected item is chosen in the dropdown
+            itemSelector.addEventListener("change", function () {
+                const itemId = this.value;
+                const supplierId = supplierSelect ? supplierSelect.value : null;
+                if (!itemId) return;
+                const existingRow = itemsTableBody.querySelector('tr[data-item-id="' + itemId + '"][data-supplier-id="' + supplierId + '"]');
+                if (existingRow) {
+                    alert("Item is already selected");
+                    this.selectedIndex = 0;
+                }
+            });
+
+            // Add selected item to the table
+            addItemBtn.addEventListener("click", function () {
+                const selectedVal = itemSelector.value;
+                if (!selectedVal || selectedVal === "undefined" || selectedVal === "null") {
+                    alert("Please select a valid item from the list first!");
+                    return;
+                }
+
+                const selectedOption = itemSelector.options[itemSelector.selectedIndex];
+                if (!selectedOption) return;
+
+                const itemId = selectedOption.value;
+                if (!itemId || itemId === "undefined" || itemId === "null") {
+                    alert("Selected item ID is invalid!");
+                    return;
+                }
+
+                const itemCode = selectedOption.getAttribute("data-code") || "N/A";
+                const itemName = selectedOption.getAttribute("data-name") || "N/A";
+                const itemType = selectedOption.getAttribute("data-type") || "N/A";
+                const parsedRate = parseFloat(selectedOption.getAttribute("data-rate"));
+                const rateVal = isNaN(parsedRate) ? 0.0 : parsedRate;
+                const supplierId = supplierSelect.value;
+                let supplierName = "Unknown";
+                if (supplierSelect.selectedIndex >= 0 && supplierSelect.options[supplierSelect.selectedIndex]) {
+                    supplierName = supplierSelect.options[supplierSelect.selectedIndex].getAttribute("data-name") || supplierSelect.options[supplierSelect.selectedIndex].text || "Unknown";
+                }
+
+                // Check if item is already added to the table under the same supplier
+                const existingRow = document.querySelector('tr[data-item-id="' + itemId + '"][data-supplier-id="' + supplierId + '"]');
+                if (existingRow) {
+                    alert("Item is already selected");
+                    return;
+                }
+
+                // Remove the "No items added yet" placeholder row if present
+                const placeholder = itemsTableBody.querySelector(".no-items-row");
+                if (placeholder) {
+                    placeholder.remove();
+                }
+
+                // Create and append the new item row
+                let tr = document.createElement("tr");
+                tr.setAttribute("data-item-id", itemId);
+                tr.setAttribute("data-supplier-id", supplierId);
+                
+                const initialTotal = rateVal.toFixed(2);
+                tr.innerHTML = 
+                    '<td>' +
+                        itemCode +
+                        '<input type="hidden" name="selectedItems" value="' + itemId + '" />' +
+                        '<input type="hidden" name="selectedSuppliers" value="' + supplierId + '" />' +
+                        '<input type="hidden" name="rates" value="' + rateVal + '" />' +
+                        '<input type="hidden" name="supplierName_' + itemId + '_' + supplierId + '" value="' + supplierName + '" />' +
+                        '<input type="hidden" name="rate_' + itemId + '_' + supplierId + '" value="' + rateVal + '" />' +
+                    '</td>' +
+                    '<td>' + itemName + '</td>' +
+                    '<td>' + itemType + '</td>' +
+                    '<td>₹' + rateVal.toFixed(2) + '</td>' +
+                    '<td>' +
+                        '<div class="input-group input-group-sm" style="width: 140px;">' +
+                            '<div class="input-group-prepend">' +
+                                '<button type="button" class="btn btn-outline-secondary btn-dec" style="font-weight: bold; width: 32px; padding: 0;">-</button>' +
+                            '</div>' +
+                            '<input type="number" name="quantities" class="form-control text-center item-qty" value="1" min="1" required style="font-weight: 600;" />' +
+                            '<input type="hidden" name="quantity_' + itemId + '_' + supplierId + '" class="legacy-qty-hidden" value="1" />' +
+                            '<div class="input-group-append">' +
+                                '<button type="button" class="btn btn-outline-secondary btn-inc" style="font-weight: bold; width: 32px; padding: 0;">+</button>' +
+                            '</div>' +
+                        '</div>' +
+                    '</td>' +
+                    '<td>' +
+                        '<span class="item-total-cost">₹' + initialTotal + '</span>' +
+                    '</td>' +
+                    '<td style="text-align: center;">' +
+                        '<button type="button" class="btn btn-sm btn-danger remove-item-btn">Delete</button>' +
+                    '</td>';
+
+                // Add quantity input & plus/minus button listeners
+                const qtyInput = tr.querySelector('.item-qty');
+                const totalCostSpan = tr.querySelector('.item-total-cost');
+
+                function updateCost() {
+                    let currentQty = parseInt(qtyInput.value) || 1;
+                    if (currentQty < 1) {
+                        currentQty = 1;
+                        qtyInput.value = 1;
+                    }
+                    const legacyHidden = tr.querySelector('.legacy-qty-hidden');
+                    if (legacyHidden) {
+                        legacyHidden.value = currentQty;
+                    }
+                    totalCostSpan.textContent = '₹' + (rateVal * currentQty).toFixed(2);
+                }
+
+                qtyInput.addEventListener('input', updateCost);
+                qtyInput.addEventListener('change', updateCost);
+
+                tr.querySelector('.btn-dec').addEventListener('click', function () {
+                    let val = parseInt(qtyInput.value) || 1;
+                    if (val > 1) {
+                        qtyInput.value = val - 1;
+                        updateCost();
+                    }
+                });
+
+                tr.querySelector('.btn-inc').addEventListener('click', function () {
+                    let val = parseInt(qtyInput.value) || 1;
+                    qtyInput.value = val + 1;
+                    updateCost();
+                });
+
+                // Add delete listener to the remove button
+                tr.querySelector(".remove-item-btn").addEventListener("click", function () {
+                    tr.remove();
+                    if (itemsTableBody.querySelectorAll("tr").length === 0) {
+                        itemsTableBody.innerHTML = `
+                            <tr class="no-items-row">
+                                <td colspan="7" class="text-center">No items added yet. Choose an item from the list above and click "Add Item".</td>
+                            </tr>
+                        `;
+                    }
+                });
+
+                itemsTableBody.appendChild(tr);
+                itemSelector.selectedIndex = 0; // Reset item dropdown selection
+            });
+
+            // Prevent form submit if no items are in the table
+            document.getElementById("bookingRequestForm").addEventListener("submit", function (e) {
+                const rows = itemsTableBody.querySelectorAll("tr");
+                if (rows.length === 1 && rows[0].classList.contains("no-items-row")) {
+                    e.preventDefault();
+                    alert("Please add at least one item to save the booking request!");
+                }
+            });
+        });
+    </script>
+
+</div>
+
+</html>

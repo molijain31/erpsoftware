@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="scripts">
+    <script th:src="@{/vendors/js/vendor.bundle.base.js}"></script>
+
+    <script th:src="@{/vendors/datatables.net/jquery.dataTables.js}"></script>
+    <script th:src="@{/vendors/datatables.net-bs4/dataTables.bootstrap4.js}"></script>
+
+    <script th:src="@{/vendors/select2/select2.min.js}"></script>
+
+    <script th:src="@{/js/off-canvas.js}"></script>
+    <script th:src="@{/js/hoverable-collapse.js}"></script>
+    <script th:src="@{/js/template.js}"></script>
+    <script th:src="@{/js/settings.js}"></script>
+    <script th:src="@{/js/todolist.js}"></script>
+
+    <script>
+        $(document).ready(function () {
+            $('table[id="dataTable"], table[id=\'dataTable\']').each(function () {
+                if (!$.fn.DataTable.isDataTable(this)) {
+                    $(this).DataTable({
+                        paging: true,
+                        searching: true,
+                        ordering: true,
+                        order: [],
+                        info: true,
+                        pageLength: 10,
+                        lengthMenu: [10, 25, 50, 100],
+                        columnDefs: [
+                            { orderable: false, targets: ["no-sort", -1] }
+                        ],
+                        language: {
+                            search: "Search:",
+                            searchPlaceholder: "Search records..."
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+</div>
+
+</body>
+</html>

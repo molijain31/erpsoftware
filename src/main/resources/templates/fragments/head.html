@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1">
+
+    <title th:text="${title}">Dashboard</title>
+
+    <!-- CSS -->
+
+    <link rel="stylesheet" th:href="@{/vendors/typicons.font/font/typicons.css}">
+
+    <link rel="stylesheet" th:href="@{/vendors/css/vendor.bundle.base.css}">
+
+    <link rel="stylesheet" th:href="@{/css/vertical-layout-light/style.css}">
+
+    <link rel="shortcut icon" th:href="@{/images/favicon.png}">
+
+    <!-- plugin css for this List page -->
+    <link rel="stylesheet" th:href="@{/vendors/select2/select2.min.css}">
+    <link rel="stylesheet" th:href="@{/vendors/select2-bootstrap-theme/select2-bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/vendors/datatables.net-bs4/dataTables.bootstrap4.css}">
+    <!-- Global Darker Border Styling & DataTables Corner Alignment -->
+    <style>
+        .card, .custom-form-card {
+            border: 1px solid #cbd5e1 !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08) !important;
+        }
+        .table-responsive {
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .table, table.table-bordered, table.dataTable {
+            border: 1px solid #cbd5e1 !important;
+            width: 100% !important;
+        }
+        .table-bordered th, 
+        .table-bordered td, 
+        .table th, 
+        .table td,
+        table.dataTable td {
+            border: 1px solid #cbd5e1 !important;
+            padding: 9px 12px !important;
+            vertical-align: middle !important;
+        }
+        .table thead th, table.dataTable thead th {
+            border: 1px solid #cbd5e1 !important;
+            border-bottom: 2px solid #64748b !important;
+            background: #f1f5f9 !important;
+            color: #1e293b !important;
+            font-weight: 700 !important;
+            padding: 9px 30px 9px 12px !important;
+            vertical-align: middle !important;
+            position: relative;
+            white-space: nowrap !important;
+        }
+        table.dataTable thead th.no-sort,
+        table.dataTable thead th.no-sort:before,
+        table.dataTable thead th.no-sort:after {
+            padding-right: 12px !important;
+        }
+        table.dataTable thead th.sorting:before,
+        table.dataTable thead th.sorting:after,
+        table.dataTable thead th.sorting_asc:before,
+        table.dataTable thead th.sorting_asc:after,
+        table.dataTable thead th.sorting_desc:before,
+        table.dataTable thead th.sorting_desc:after {
+            right: 8px !important;
+            opacity: 0.5;
+        }
+        .form-control, .form-control-sm, select.form-control {
+            border: 1px solid #94a3b8 !important;
+        }
+        .form-control:focus {
+            border-color: #2563eb !important;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+        }
+
+        /* DataTables Wrapper & Right-Corner Search Alignment */
+        .dataTables_wrapper {
+            position: relative;
+            clear: both;
+            padding: 0;
+        }
+        .dataTables_wrapper .dataTables_length {
+            float: left !important;
+            text-align: left !important;
+            margin-bottom: 1rem !important;
+        }
+        .dataTables_wrapper .dataTables_length label {
+            font-weight: 600 !important;
+            color: #475569 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 6px;
+        }
+        .dataTables_wrapper .dataTables_length select {
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 6px !important;
+            padding: 4px 28px 4px 10px !important;
+            min-width: 65px !important;
+            height: 34px !important;
+            outline: none !important;
+            font-size: 13.5px !important;
+            background-color: #ffffff !important;
+            color: #1e293b !important;
+        }
+        .dataTables_wrapper .dataTables_filter {
+            float: right !important;
+            text-align: right !important;
+            margin-bottom: 1rem !important;
+        }
+        .dataTables_wrapper .dataTables_filter label {
+            font-weight: 600 !important;
+            color: #475569 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            margin-bottom: 0 !important;
+        }
+        .dataTables_wrapper .dataTables_filter input {
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 6px !important;
+            padding: 6px 12px !important;
+            outline: none !important;
+            font-size: 13.5px !important;
+            color: #1e293b !important;
+            margin-left: 0.5rem !important;
+            display: inline-block !important;
+            width: 220px !important;
+            transition: all 0.2s ease-in-out;
+        }
+        .dataTables_wrapper .dataTables_filter input:focus {
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+        }
+        .dataTables_wrapper::after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+        .dataTables_wrapper .dataTables_info {
+            float: left !important;
+            padding-top: 0.75em !important;
+            color: #64748b !important;
+            font-size: 13px !important;
+        }
+        .dataTables_wrapper .dataTables_paginate {
+            float: right !important;
+            text-align: right !important;
+            padding-top: 0.5em !important;
+        }
+    </style>
+</head>
+</html>
